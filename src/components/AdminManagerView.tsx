@@ -354,6 +354,7 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
   const [seasonInput, setSeasonInput] = useState(clubSettings.season);
   const [announcementInput, setAnnouncementInput] = useState(clubSettings.announcement);
   const [adminPinInput, setAdminPinInput] = useState(clubSettings.adminPin);
+  const [adminPin2Input, setAdminPin2Input] = useState(clubSettings.adminPin2 || '');
   const [logoUrlInput, setLogoUrlInput] = useState(clubSettings.logoUrl || '/logo.svg');
   const [cityInput, setCityInput] = useState(clubSettings.city || 'Trissino (VI)');
   const [addressInput, setAddressInput] = useState(clubSettings.address || 'Via Palladio, 24 - 36070 Trissino (VI)');
@@ -786,6 +787,7 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
         season: seasonInput.trim() || 'Stagione 2026',
         announcement: announcementInput.trim(),
         adminPin: adminPinInput.trim() || '1234',
+        adminPin2: adminPin2Input.trim() || '',
         city: cityInput.trim() || 'Trissino (VI)',
         address: addressInput.trim() || 'Via Palladio, 24 - 36070 Trissino (VI)',
         phone: phoneInput.trim() || '+39 320 8080670',
@@ -2433,20 +2435,53 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                    PIN di Accesso all'Area Gestore
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={adminPinInput}
-                    onChange={(e) => setAdminPinInput(e.target.value)}
-                    required
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-sm"
-                  />
-                  <span className="text-[11px] text-slate-500 block">Default: 1234</span>
+              {/* Sezione PIN Gestori (Fino a 2 PIN a 8 cifre) */}
+              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+                <div className="flex items-center gap-2 text-amber-400">
+                  <ShieldCheck className="w-4 h-4" />
+                  <h4 className="font-display font-bold text-sm text-white">
+                    Codici PIN di Accesso all'Area Gestore (Fino a 2 Gestori)
+                  </h4>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Puoi impostare 2 codici PIN indipendenti a 8 cifre in modo che entrambi i gestori abbiano il proprio accesso riservato.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                      PIN Gestore 1 (8 cifre)
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={8}
+                      value={adminPinInput}
+                      onChange={(e) => setAdminPinInput(e.target.value.replace(/\D/g, ''))}
+                      placeholder="es. 12345678"
+                      required
+                      className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-base tracking-widest focus:outline-none focus:border-amber-500"
+                    />
+                    <span className="text-[11px] text-slate-500 block">
+                      {adminPinInput.length === 8 ? '✓ 8 cifre impostate' : `${adminPinInput.length}/8 cifre`}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                      PIN Gestore 2 (8 cifre - Secondo Gestore)
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={8}
+                      value={adminPin2Input}
+                      onChange={(e) => setAdminPin2Input(e.target.value.replace(/\D/g, ''))}
+                      placeholder="es. 87654321"
+                      className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-base tracking-widest focus:outline-none focus:border-amber-500"
+                    />
+                    <span className="text-[11px] text-slate-500 block">
+                      {adminPin2Input ? (adminPin2Input.length === 8 ? '✓ 8 cifre impostate' : `${adminPin2Input.length}/8 cifre`) : 'Opzionale (non impostato)'}
+                    </span>
+                  </div>
                 </div>
               </div>
 

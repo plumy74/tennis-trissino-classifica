@@ -29,6 +29,7 @@ export const ClubSettingsModal: React.FC<ClubSettingsModalProps> = ({
   const [announcement, setAnnouncement] = useState(settings.announcement);
   const [season, setSeason] = useState(settings.season);
   const [adminPin, setAdminPin] = useState(settings.adminPin);
+  const [adminPin2, setAdminPin2] = useState(settings.adminPin2 || '');
   const [phone, setPhone] = useState(settings.phone || '');
   const [address, setAddress] = useState(settings.address || 'Via Nardi 104, Trissino (VI)');
   const [logoUrl, setLogoUrl] = useState(settings.logoUrl || '/logo.svg');
@@ -67,6 +68,7 @@ export const ClubSettingsModal: React.FC<ClubSettingsModalProps> = ({
         announcement,
         season,
         adminPin,
+        adminPin2,
         phone,
         address,
         logoUrl
@@ -287,17 +289,51 @@ export const ClubSettingsModal: React.FC<ClubSettingsModalProps> = ({
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                PIN Accesso Gestore
-              </label>
-              <input
-                type="text"
-                maxLength={6}
-                value={adminPin}
-                onChange={(e) => setAdminPin(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono text-sm focus:outline-none focus:border-blue-500"
-              />
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                  PIN Accesso Gestori (Fino a 2 Gestori a 8 Cifre)
+                </label>
+                <p className="text-[11px] text-slate-500">
+                  Consente l'accesso indipendente a entrambi i responsabili del circolo.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-700 block">
+                    PIN Gestore 1 (8 cifre)
+                  </span>
+                  <input
+                    type="text"
+                    maxLength={8}
+                    placeholder="es. 12345678"
+                    value={adminPin}
+                    onChange={(e) => setAdminPin(e.target.value.replace(/\D/g, ''))}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono text-sm tracking-widest focus:outline-none focus:border-blue-500"
+                  />
+                  <span className="text-[10px] text-slate-500 block">
+                    {adminPin.length === 8 ? '✓ 8 cifre' : `${adminPin.length}/8 cifre`}
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-700 block">
+                    PIN Gestore 2 (8 cifre - Opzionale)
+                  </span>
+                  <input
+                    type="text"
+                    maxLength={8}
+                    placeholder="es. 87654321"
+                    value={adminPin2}
+                    onChange={(e) => setAdminPin2(e.target.value.replace(/\D/g, ''))}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono text-sm tracking-widest focus:outline-none focus:border-blue-500"
+                  />
+                  <span className="text-[10px] text-slate-500 block">
+                    {adminPin2 ? (adminPin2.length === 8 ? '✓ 8 cifre' : `${adminPin2.length}/8 cifre`) : 'Non impostato'}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {onClearDatabase && (

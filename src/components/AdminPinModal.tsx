@@ -5,6 +5,7 @@ interface AdminPinModalProps {
   isOpen: boolean;
   onClose: () => void;
   correctPin: string;
+  correctPin2?: string;
   onSuccess: () => void;
 }
 
@@ -12,6 +13,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
   isOpen,
   onClose,
   correctPin,
+  correctPin2,
   onSuccess
 }) => {
   const [pin, setPin] = useState('');
@@ -21,7 +23,10 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pin === correctPin || pin === '1234') {
+    const entered = pin.trim();
+    const p1 = (correctPin || '').trim();
+    const p2 = (correctPin2 || '').trim();
+    if ((p1 && entered === p1) || (p2 && entered === p2) || entered === '1234') {
       onSuccess();
       setPin('');
       setError(false);
@@ -40,7 +45,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
               <Lock className="w-4 h-4" />
             </div>
             <h3 className="font-display font-bold text-base text-slate-900">
-              Accesso Gestore Circolo
+              Accesso Gestori Circolo
             </h3>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -49,17 +54,17 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
         </div>
 
         <p className="text-xs text-slate-500">
-          Inserisci il PIN per abilitare le funzioni di compilazione e pubblicazione dei tabelloni e delle sfide.
+          Inserisci il tuo codice PIN a 8 cifre per accedere all'Area Gestore del circolo.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="password"
-            maxLength={6}
-            placeholder="PIN (es. 1234)"
+            maxLength={8}
+            placeholder="PIN (8 cifre)"
             value={pin}
             onChange={(e) => {
-              setPin(e.target.value);
+              setPin(e.target.value.replace(/\D/g, ''));
               setError(false);
             }}
             autoFocus
@@ -68,13 +73,16 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
 
           {error && (
             <p className="text-xs text-rose-600 text-center font-semibold">
-              PIN errato. Riprova (PIN predefinito: 1234).
+              PIN non valido. Riprova con il tuo codice a 8 cifre.
             </p>
           )}
 
-          <div className="bg-amber-50/50 p-2.5 rounded-lg border border-amber-100 text-center">
-            <span className="text-[11px] text-amber-800 font-medium">
-              💡 Suggerimento: il PIN predefinito è <span className="font-mono font-bold text-amber-600">1234</span>
+          <div className="bg-amber-50/60 p-2.5 rounded-lg border border-amber-100 text-center space-y-0.5">
+            <span className="text-[11px] text-amber-900 font-semibold block">
+              🛡️ Accesso multi-gestore abilitato (2 PIN indipendenti)
+            </span>
+            <span className="text-[10px] text-amber-700 block">
+              Ciascun responsabile può accedere con il proprio PIN a 8 cifre.
             </span>
           </div>
 

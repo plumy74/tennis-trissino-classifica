@@ -114,6 +114,7 @@ export const INITIAL_CLUB_SETTINGS: ClubSettings = {
   clubName: 'Tennis Comunali Trissino',
   city: 'Trissino (VI)',
   adminPin: '1234',
+  adminPin2: '',
   announcement: 'Benvenuti al Circolo Tennis Comunali Trissino! Sono aperte le sfide per la classifica mobile sociale e le iscrizioni ai tornei.',
   season: 'Stagione 2026',
   phone: '+39 320 8080670',

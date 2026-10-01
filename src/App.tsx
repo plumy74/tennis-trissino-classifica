@@ -1029,6 +1029,7 @@ export default function App() {
         isOpen={isAdminPinModalOpen}
         onClose={() => setIsAdminPinModalOpen(false)}
         correctPin={clubSettings.adminPin || '1234'}
+        correctPin2={clubSettings.adminPin2}
         onSuccess={() => {
           setIsAdmin(true);
           setActiveTab('manager');

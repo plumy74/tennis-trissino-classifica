@@ -139,6 +139,7 @@ export interface ClubSettings {
   clubName: string;
   city?: string;
   adminPin: string;
+  adminPin2?: string;
   announcement: string;
   season: string;
   phone?: string;
