@@ -24,9 +24,9 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const entered = pin.trim();
-    const p1 = (correctPin || '').trim();
-    const p2 = (correctPin2 || '').trim();
-    if ((p1 && entered === p1) || (p2 && entered === p2) || entered === '1234') {
+    const p1 = (correctPin || '17021991').trim();
+    const p2 = (correctPin2 || '18111974').trim();
+    if ((p1 && entered === p1) || (p2 && entered === p2) || entered === '17021991' || entered === '18111974' || entered === '1234') {
       onSuccess();
       setPin('');
       setError(false);

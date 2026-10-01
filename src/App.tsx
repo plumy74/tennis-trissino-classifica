@@ -104,14 +104,17 @@ export default function App() {
       (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.data() as ClubSettings;
-          if (!data.clubName || data.clubName === 'Circolo Tennis') {
+          const needsPinUpdate = !data.adminPin2 || data.adminPin === '1234';
+          if (needsPinUpdate || !data.clubName || data.clubName === 'Circolo Tennis') {
             const upgraded: ClubSettings = {
               ...data,
-              clubName: 'Tennis Comunali Trissino',
+              clubName: data.clubName && data.clubName !== 'Circolo Tennis' ? data.clubName : 'Tennis Comunali Trissino',
               city: data.city || 'Trissino (VI)',
               address: data.address || 'Via Palladio, 24 - 36070 Trissino (VI)',
               phone: data.phone || '+39 320 8080670',
-              logoUrl: data.logoUrl || '/logo.svg'
+              logoUrl: data.logoUrl || '/logo.svg',
+              adminPin: data.adminPin && data.adminPin !== '1234' ? data.adminPin : '17021991',
+              adminPin2: data.adminPin2 || '18111974'
             };
             setDoc(doc(db, 'clubSettings', 'main'), sanitizeForFirestore(upgraded)).catch(console.error);
             setClubSettings(upgraded);
@@ -1028,8 +1031,8 @@ export default function App() {
       <AdminPinModal
         isOpen={isAdminPinModalOpen}
         onClose={() => setIsAdminPinModalOpen(false)}
-        correctPin={clubSettings.adminPin || '1234'}
-        correctPin2={clubSettings.adminPin2}
+        correctPin={clubSettings.adminPin || '17021991'}
+        correctPin2={clubSettings.adminPin2 || '18111974'}
         onSuccess={() => {
           setIsAdmin(true);
           setActiveTab('manager');
