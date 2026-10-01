@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Club settings: readable by all visitors/players, manageable by admin
+    match /clubSettings/{docId} {
+      allow read: if true;
+      allow create, update: if isValidId(docId) &&
+        request.resource.data.clubName is string &&
+        request.resource.data.clubName.size() <= 100;
+      allow delete: if isValidId(docId);
+    }
+
+    // Players: public ranking board viewable by all, editable/deletable by manager
+    match /players/{playerId} {
+      allow read: if true;
+      allow create, update: if isValidId(playerId) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() <= 100 &&
+        request.resource.data.points is number;
+      allow delete: if isValidId(playerId);
+    }
+
+    // Ranking matches (sfide di classifica): readable by all members, recorded/deleted by manager
+    match /rankingMatches/{matchId} {
+      allow read: if true;
+      allow create, update: if isValidId(matchId) &&
+        request.resource.data.player1Id is string &&
+        request.resource.data.player2Id is string &&
+        request.resource.data.status is string;
+      allow delete: if isValidId(matchId);
+    }
+
+    // Tournaments: readable by all members, managed by club director
+    match /tournaments/{tournamentId} {
+      allow read: if true;
+      allow create, update: if isValidId(tournamentId) &&
+        request.resource.data.name is string &&
+        request.resource.data.type is string &&
+        request.resource.data.status is string;
+      allow delete: if isValidId(tournamentId);
+    }
+
+    // Tournament Matches (bracket slots and round robin ties)
+    match /tournamentMatches/{matchId} {
+      allow read: if true;
+      allow create, update: if isValidId(matchId) &&
+        request.resource.data.tournamentId is string &&
+        request.resource.data.round is number &&
+        request.resource.data.status is string;
+      allow delete: if isValidId(matchId);
+    }
+  }
+}

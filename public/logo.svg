@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="45%" r="55%" fx="40%" fy="35%">
+      <stop offset="0%" stop-color="#1E3A8A" />
+      <stop offset="60%" stop-color="#0F2148" />
+      <stop offset="100%" stop-color="#081024" />
+    </radialGradient>
+
+    <!-- Flame Gradient 1 -->
+    <linearGradient id="flameGrad1" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#DC2626" />
+      <stop offset="45%" stop-color="#EA580C" />
+      <stop offset="80%" stop-color="#F97316" />
+      <stop offset="100%" stop-color="#FBBF24" />
+    </linearGradient>
+
+    <!-- Flame Gradient 2 -->
+    <linearGradient id="flameGrad2" x1="10%" y1="90%" x2="90%" y2="10%">
+      <stop offset="0%" stop-color="#EA580C" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#FEF08A" />
+    </linearGradient>
+
+    <!-- Tennis Ball Gradient -->
+    <radialGradient id="ballGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="35%" stop-color="#FACC15" />
+      <stop offset="70%" stop-color="#EAB308" />
+      <stop offset="100%" stop-color="#CA8A04" />
+    </radialGradient>
+
+    <!-- Gold Accent Rim -->
+    <linearGradient id="goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="30%" stop-color="#F59E0B" />
+      <stop offset="70%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#FDE68A" />
+    </linearGradient>
+
+    <!-- Drop Shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.45" />
+    </filter>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Shadow Shield/Circle -->
+  <circle cx="250" cy="250" r="236" fill="url(#goldRim)" filter="url(#shadow)" />
+  <circle cx="250" cy="250" r="226" fill="#081024" />
+  <circle cx="250" cy="250" r="220" fill="url(#bgGrad)" stroke="#1E40AF" stroke-width="2" />
+
+  <!-- Outer Ring Inscription Track (Concentric Rings) -->
+  <circle cx="250" cy="250" r="162" fill="none" stroke="#F59E0B" stroke-width="2" stroke-dasharray="6,4" opacity="0.4" />
+  <circle cx="250" cy="250" r="214" fill="none" stroke="#F59E0B" stroke-width="1.5" opacity="0.6" />
+
+  <!-- Top Inscription: TENNIS COMUNALI -->
+  <path id="textArcTop" d="M 75,250 A 175,175 0 0,1 425,250" fill="none" />
+  <text font-family="'Space Grotesk', 'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="28" fill="#FFFFFF" letter-spacing="4">
+    <textPath href="#textArcTop" startOffset="50%" text-anchor="middle">
+      TENNIS COMUNALI
+    </textPath>
+  </text>
+
+  <!-- Stars on sides -->
+  <g fill="#F59E0B">
+    <!-- Left Star -->
+    <polygon points="68,250 72,258 81,259 74,265 76,274 68,269 60,274 62,265 55,259 64,258" transform="scale(0.8) translate(18, 55)" />
+    <!-- Right Star -->
+    <polygon points="432,250 436,258 445,259 438,265 440,274 432,269 424,274 426,265 419,259 428,258" transform="scale(0.8) translate(105, 55)" />
+  </g>
+
+  <!-- Bottom Inscription Ribbon: TRISSINO -->
+  <g filter="url(#shadow)">
+    <!-- Ribbon Banner Shape -->
+    <path d="M 120,405 L 380,405 L 365,450 L 135,450 Z" fill="#EA580C" />
+    <path d="M 120,405 L 380,405 L 372,425 L 128,425 Z" fill="#F97316" />
+    <polygon points="120,405 135,450 95,432 105,395" fill="#C2410C" />
+    <polygon points="380,405 365,450 405,432 395,395" fill="#C2410C" />
+    <rect x="130" y="407" width="240" height="38" rx="4" fill="none" stroke="#FDE047" stroke-width="1.5" />
+    <text x="250" y="435" text-anchor="middle" font-family="'Space Grotesk', 'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="26" fill="#FFFFFF" letter-spacing="6">
+      TRISSINO
+    </text>
+  </g>
+
+  <!-- FLAME SWOOSHES (Fire Tail for Tennis Ball) -->
+  <g filter="url(#glow)">
+    <!-- Main Outer Flame Tail Left -->
+    <path d="M 140,240 C 130,170 170,120 215,95 C 195,125 205,145 225,155 C 220,130 240,110 265,90 C 255,120 270,135 285,140 C 275,105 305,95 320,80 C 315,115 335,130 350,140 C 320,195 240,240 140,240 Z" fill="url(#flameGrad1)" opacity="0.85" />
+    <!-- Secondary Dynamic Fire Swirl -->
+    <path d="M 175,255 C 160,190 200,150 240,125 C 225,150 245,165 260,170 C 250,145 275,130 295,115 C 285,140 305,150 320,155 C 290,205 240,250 175,255 Z" fill="url(#flameGrad2)" opacity="0.95" />
+  </g>
+
+  <!-- High-Energy Speed Streaks behind Ball -->
+  <path d="M 130,285 C 150,290 190,285 220,270" stroke="#F97316" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.8" />
+  <path d="M 145,310 C 170,315 205,305 235,285" stroke="#FBBF24" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.75" />
+  <path d="M 170,330 C 190,332 215,322 245,300" stroke="#F97316" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.6" />
+
+  <!-- CENTRAL TENNIS BALL -->
+  <g filter="url(#shadow)">
+    <!-- Tennis Ball Main Body -->
+    <circle cx="285" cy="245" r="75" fill="url(#ballGrad)" stroke="#B45309" stroke-width="3" />
+
+    <!-- Tennis Ball Seam Left Arc -->
+    <path d="M 235,188 C 265,215 265,275 235,302" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" filter="url(#shadow)" />
+    <!-- Tennis Ball Seam Right Arc -->
+    <path d="M 335,188 C 305,215 305,275 335,302" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" filter="url(#shadow)" />
+
+    <!-- Shading & Highlights on Tennis Ball -->
+    <ellipse cx="260" cy="215" rx="28" ry="16" fill="#FFFFFF" opacity="0.4" transform="rotate(-30 260 215)" />
+    <path d="M 235,188 C 265,215 265,275 235,302" fill="none" stroke="#CA8A04" stroke-width="1.5" stroke-dasharray="3,3" />
+    <path d="M 335,188 C 305,215 305,275 335,302" fill="none" stroke="#CA8A04" stroke-width="1.5" stroke-dasharray="3,3" />
+  </g>
+
+  <!-- Dynamic Orange & Gold Speed Ring Accent -->
+  <path d="M 360,230 C 375,260 365,300 335,330 C 305,360 260,370 220,355" fill="none" stroke="url(#flameGrad1)" stroke-width="4" stroke-linecap="round" stroke-dasharray="14,8" opacity="0.9" />
+
+  <!-- Subtitle Established / Sport details -->
+  <text x="250" y="382" text-anchor="middle" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="700" font-size="12" fill="#93C5FD" letter-spacing="3" opacity="0.9">
+    CIRCOLO TENNIS
+  </text>
+</svg>

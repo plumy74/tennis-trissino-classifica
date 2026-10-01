@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "ClubSettings": {
+      "title": "ClubSettings",
+      "description": "Configurazioni generali del circolo tennis e bacheca avvisi",
+      "type": "object",
+      "properties": {
+        "clubName": { "type": "string", "maxLength": 100 },
+        "adminPin": { "type": "string", "maxLength": 20 },
+        "announcement": { "type": "string", "maxLength": 500 },
+        "season": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["clubName"]
+    },
+    "Player": {
+      "title": "Player",
+      "description": "Giocatore iscritto al circolo tennis con classifica mobile e statistiche",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "name": { "type": "string", "maxLength": 100 },
+        "fitRating": { "type": "string", "maxLength": 20 },
+        "points": { "type": "number" },
+        "rank": { "type": "number" },
+        "phone": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 100 },
+        "matchesPlayed": { "type": "number" },
+        "matchesWon": { "type": "number" },
+        "matchesLost": { "type": "number" },
+        "currentStreak": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "points", "rank"]
+    },
+    "RankingMatch": {
+      "title": "RankingMatch",
+      "description": "Partita di sfida per la classifica mobile del circolo",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "maxLength": 50 },
+        "player1Id": { "type": "string", "maxLength": 100 },
+        "player1Name": { "type": "string", "maxLength": 100 },
+        "player1RankAtMatch": { "type": "number" },
+        "player2Id": { "type": "string", "maxLength": 100 },
+        "player2Name": { "type": "string", "maxLength": 100 },
+        "player2RankAtMatch": { "type": "number" },
+        "winnerId": { "type": "string", "maxLength": 100 },
+        "loserId": { "type": "string", "maxLength": 100 },
+        "score": { "type": "string", "maxLength": 100 },
+        "pointsAwardedWinner": { "type": "number" },
+        "pointsDeductedLoser": { "type": "number" },
+        "ruleApplied": { "type": "string", "maxLength": 100 },
+        "court": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["scheduled", "completed"] }
+      },
+      "required": ["id", "player1Id", "player2Id", "status"]
+    },
+    "Tournament": {
+      "title": "Tournament",
+      "description": "Torneo sociale del circolo tennis (Round Robin o Eliminazione Diretta)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "name": { "type": "string", "maxLength": 150 },
+        "type": { "type": "string", "enum": ["round_robin", "elimination"] },
+        "category": { "type": "string", "maxLength": 50 },
+        "surface": { "type": "string", "maxLength": 50 },
+        "startDate": { "type": "string", "maxLength": 50 },
+        "endDate": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["draft", "ongoing", "completed"] },
+        "winnerId": { "type": "string", "maxLength": 100 },
+        "winnerName": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "name", "type", "status"]
+    },
+    "TournamentMatch": {
+      "title": "TournamentMatch",
+      "description": "Incontro singolo all'interno di un torneo sociale",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "tournamentId": { "type": "string", "maxLength": 100 },
+        "tournamentType": { "type": "string", "enum": ["round_robin", "elimination"] },
+        "round": { "type": "number" },
+        "roundName": { "type": "string", "maxLength": 100 },
+        "matchNumber": { "type": "number" },
+        "player1Id": { "type": "string", "maxLength": 100 },
+        "player1Name": { "type": "string", "maxLength": 100 },
+        "player2Id": { "type": "string", "maxLength": 100 },
+        "player2Name": { "type": "string", "maxLength": 100 },
+        "score": { "type": "string", "maxLength": 100 },
+        "winnerId": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["scheduled", "completed", "bye"] }
+      },
+      "required": ["id", "tournamentId", "round", "status"]
+    }
+  },
+  "firestore": {
+    "/clubSettings/{docId}": {
+      "schema": { "$ref": "#/entities/ClubSettings" },
+      "description": "Configurazioni e annunci del circolo"
+    },
+    "/players/{playerId}": {
+      "schema": { "$ref": "#/entities/Player" },
+      "description": "Elenco giocatori e statistiche classifica mobile"
+    },
+    "/rankingMatches/{matchId}": {
+      "schema": { "$ref": "#/entities/RankingMatch" },
+      "description": "Storico e sfide della classifica mobile"
+    },
+    "/tournaments/{tournamentId}": {
+      "schema": { "$ref": "#/entities/Tournament" },
+      "description": "Tornei sociali (Round Robin ed Eliminazione)"
+    },
+    "/tournamentMatches/{matchId}": {
+      "schema": { "$ref": "#/entities/TournamentMatch" },
+      "description": "Partite e tabelloni dei tornei sociali"
+    }
+  }
+}

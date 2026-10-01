@@ -1,0 +1,6 @@
+{
+  "name": "Tennis Club Master - Classifica & Tornei",
+  "description": "Gestionale ufficiale per circoli tennis: classifica mobile a sfide con calcolo punteggio, tornei round-robin ed eliminazione diretta, tabelloni esportabili in PDF, statistiche giocatori e sincronizzazione Firebase in tempo reale.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
