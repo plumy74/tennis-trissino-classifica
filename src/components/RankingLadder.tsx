@@ -46,7 +46,30 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
   const [selectedFitRating, setSelectedFitRating] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('2026');
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyCategoryFilter, setHistoryCategoryFilter] = useState<'all' | 'maschile' | 'femminile' | 'doppio'>('all');
+  const [historyDateFilter, setHistoryDateFilter] = useState('');
   const [showFullLadder, setShowFullLadder] = useState(false);
+
+  const filteredHistoryMatches = useMemo(() => {
+    return rankingMatches.filter(m => {
+      if (historyCategoryFilter !== 'all' && m.category !== historyCategoryFilter) {
+        return false;
+      }
+      if (historySearch.trim()) {
+        const q = historySearch.toLowerCase();
+        const p1Match = m.player1Name.toLowerCase().includes(q);
+        const p2Match = m.player2Name.toLowerCase().includes(q);
+        if (!p1Match && !p2Match) return false;
+      }
+      if (historyDateFilter.trim()) {
+        const matchDateStr = m.date.slice(0, 10);
+        if (matchDateStr !== historyDateFilter) return false;
+      }
+      return true;
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [rankingMatches, historyCategoryFilter, historySearch, historyDateFilter]);
 
   // Calcola dinamicamente gli anni disponibili dai match reali, escludendo 2024 e 2025
   const availableYears = useMemo(() => {
@@ -301,6 +324,15 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
               <span>Regole Punteggio</span>
             </button>
 
+            <button
+              onClick={() => setShowHistoryModal(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+              title="Storico completo partite con filtri"
+            >
+              <span>📜</span>
+              <span>Storico Partite</span>
+            </button>
+
             {/* Azioni riservate SOLO all'Area Gestore */}
             {isAdmin && onOpenManagerArea && (
               <button
@@ -443,6 +475,152 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                   className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/10 cursor-pointer transition-colors"
                 >
                   Ho capito, Chiudi Regolamento
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Storico Partite Modal */}
+        {showHistoryModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-orange-500" />
+                  <h3 className="font-display font-extrabold text-base sm:text-lg text-slate-900">
+                    Storico Partite • Archivio Risultati ({filteredHistoryMatches.length})
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowHistoryModal(false)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Filters Bar */}
+              <div className="p-4 bg-slate-50/80 border-b border-slate-200/60 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Search Name */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Cerca per nome atleta..."
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+
+                {/* Category / Gender Filter */}
+                <select
+                  value={historyCategoryFilter}
+                  onChange={(e) => setHistoryCategoryFilter(e.target.value as any)}
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-orange-500 cursor-pointer font-semibold"
+                >
+                  <option value="all">Tutte le categorie</option>
+                  <option value="maschile">Singolare Maschile</option>
+                  <option value="femminile">Singolare Femminile</option>
+                  <option value="doppio">Classifica Doppio</option>
+                </select>
+
+                {/* Date Filter */}
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={historyDateFilter}
+                    onChange={(e) => setHistoryDateFilter(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-orange-500 cursor-pointer"
+                  />
+                  {historyDateFilter && (
+                    <button
+                      onClick={() => setHistoryDateFilter('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-700"
+                      title="Annulla data"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Scrollable Match List */}
+              <div className="p-6 overflow-y-auto space-y-3 max-h-[60vh]">
+                {filteredHistoryMatches.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400 space-y-2">
+                    <span className="text-3xl">🎾</span>
+                    <p className="text-sm font-medium">Nessuna partita trovata con i filtri selezionati.</p>
+                  </div>
+                ) : (
+                  filteredHistoryMatches.map(m => {
+                    const isP1Winner = m.winnerId === m.player1Id;
+                    const dateFormatted = new Date(m.date).toLocaleDateString('it-IT', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    });
+
+                    return (
+                      <div key={m.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-slate-300 transition-all space-y-2.5">
+                        <div className="flex items-center justify-between text-xs text-slate-500 border-b border-slate-100 pb-2">
+                          <span className="font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
+                            {m.category === 'maschile' ? 'Sing. Maschile' : m.category === 'femminile' ? 'Sing. Femminile' : 'Doppio'} {m.matchType === 'timed' ? '• ⏱️ A Tempo (1h)' : '• 🎾 Classica'}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span>📅</span> {dateFormatted} {m.court ? `• ${m.court}` : ''}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3">
+                          {/* Player 1 */}
+                          <div className={`flex-1 text-left ${isP1Winner ? 'font-black text-slate-900' : 'text-slate-600'}`}>
+                            <div className="flex items-center gap-1.5">
+                              {isP1Winner && <span className="text-amber-500">🏆</span>}
+                              <span className="text-sm">{m.player1Name}</span>
+                              <span className="text-[11px] text-slate-400 font-normal">(#{m.player1RankAtMatch})</span>
+                            </div>
+                          </div>
+
+                          {/* Score */}
+                          <div className="px-3 py-1 bg-slate-100 rounded-xl font-mono font-bold text-slate-800 text-sm border border-slate-200">
+                            {m.score}
+                          </div>
+
+                          {/* Player 2 */}
+                          <div className={`flex-1 text-right ${!isP1Winner ? 'font-black text-slate-900' : 'text-slate-600'}`}>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <span className="text-[11px] text-slate-400 font-normal">(#{m.player2RankAtMatch})</span>
+                              <span className="text-sm">{m.player2Name}</span>
+                              {!isP1Winner && <span className="text-amber-500">🏆</span>}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                          <span>🎯 Regola: <strong>{m.ruleApplied}</strong></span>
+                          <span className="text-emerald-600 font-bold">+{m.pointsAwardedWinner} pt vincitore</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+                <span className="text-xs text-slate-500">
+                  Totale partite in archivio: <strong>{rankingMatches.length}</strong>
+                </span>
+                <button
+                  onClick={() => setShowHistoryModal(false)}
+                  className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md cursor-pointer transition-colors"
+                >
+                  Chiudi Archivio
                 </button>
               </div>
             </div>
