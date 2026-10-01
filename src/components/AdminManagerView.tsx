@@ -42,6 +42,7 @@ interface AdminManagerViewProps {
   onDeleteRankingMatch: (matchId: string) => Promise<void>;
   onOpenNewTournamentModal: () => void;
   onDeleteTournament: (tournamentId: string) => Promise<void>;
+  onUpdateTournament?: (tournament: Tournament) => Promise<void>;
   onUpdateTournamentMatchScore: (
     matchId: string, 
     score: string, 
@@ -76,6 +77,7 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
   onDeleteRankingMatch,
   onOpenNewTournamentModal,
   onDeleteTournament,
+  onUpdateTournament,
   onUpdateTournamentMatchScore,
   onClearAllData,
   onExitAdmin,
@@ -747,6 +749,28 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
     } catch (err) {
       console.error(err);
       alert('Errore eliminazione torneo.');
+    }
+  };
+
+  // Modifica Nome Torneo State & Handler
+  const [editingTournName, setEditingTournName] = useState<Tournament | null>(null);
+  const [newTournNameInput, setNewTournNameInput] = useState<string>('');
+  const [isSavingTournName, setIsSavingTournName] = useState<boolean>(false);
+
+  const handleSaveTournNameConfirm = async () => {
+    if (!editingTournName || !newTournNameInput.trim() || !onUpdateTournament) return;
+    try {
+      setIsSavingTournName(true);
+      await onUpdateTournament({
+        ...editingTournName,
+        name: newTournNameInput.trim()
+      });
+      setEditingTournName(null);
+    } catch (err) {
+      console.error(err);
+      alert('Errore modifica nome torneo.');
+    } finally {
+      setIsSavingTournName(false);
     }
   };
 
@@ -2200,13 +2224,27 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                 </div>
 
                 {activeTourn && (
-                  <button
-                    onClick={() => setTournToDelete(activeTourn)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-semibold self-start sm:self-center cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Elimina Questo Torneo</span>
-                  </button>
+                  <div className="flex items-center gap-2 self-start sm:self-center">
+                    <button
+                      onClick={() => {
+                        setEditingTournName(activeTourn);
+                        setNewTournNameInput(activeTourn.name);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold cursor-pointer"
+                      title="Modifica nome del torneo"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Rinomina Torneo</span>
+                    </button>
+
+                    <button
+                      onClick={() => setTournToDelete(activeTourn)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-semibold cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Elimina Questo Torneo</span>
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -3298,6 +3336,70 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                 className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
               >
                 Elimina Torneo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 5B: MODIFICA NOME TORNEO                                            */}
+      {/* ========================================================================= */}
+      {editingTournName && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2 text-indigo-400">
+                <Edit3 className="w-5 h-5" />
+                <h3 className="font-display font-bold text-lg text-white">
+                  Rinomina Torneo
+                </h3>
+              </div>
+              <button
+                onClick={() => setEditingTournName(null)}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 uppercase">
+                Nome Torneo
+              </label>
+              <input
+                type="text"
+                value={newTournNameInput}
+                onChange={(e) => setNewTournNameInput(e.target.value)}
+                placeholder="Inserisci nuovo nome torneo..."
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-bold text-sm focus:outline-none focus:border-indigo-500"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSaveTournNameConfirm();
+                  } else if (e.key === 'Escape') {
+                    setEditingTournName(null);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setEditingTournName(null)}
+                className="px-4 py-2 text-xs text-slate-400 hover:text-white cursor-pointer"
+              >
+                Annulla
+              </button>
+              <button
+                type="button"
+                disabled={isSavingTournName || !newTournNameInput.trim()}
+                onClick={handleSaveTournNameConfirm}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors disabled:opacity-50"
+              >
+                {isSavingTournName ? 'Salvataggio...' : 'Salva Modifiche'}
               </button>
             </div>
           </div>

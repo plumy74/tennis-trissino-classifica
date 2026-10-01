@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
-import { Tournament, TournamentMatch, RoundRobinStanding } from '../types/tennis';
+import autoTable from 'jspdf-autotable';
+import { Tournament, TournamentMatch, RoundRobinStanding, RankingMatch } from '../types/tennis';
 
 /**
  * Esporta il tabellone grafico ufficiale con linee di dipendenza gerarchica (stile FITP / albero)
@@ -444,4 +445,68 @@ export function shareTournamentViaEmail(
   body += `Il tabellone completo è affisso anche nella bacheca del circolo.\n\nCordiali saluti,\nLa Direzione del ${clubName}`;
 
   window.location.href = `mailto:?subject=${subject}&body=${encodeURIComponent(body)}`;
+}
+
+/**
+ * Esporta lo storico dei risultati in PDF
+ */
+export function exportMatchHistoryToPDF(
+  matches: RankingMatch[],
+  categoryLabel: string = 'Generale',
+  clubName: string = 'Tennis Comunali Trissino'
+) {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text(`${clubName.toUpperCase()} — STORICO PARTITE (${categoryLabel.toUpperCase()})`, 14, 15);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`Totale incontri registrati: ${matches.length}  •  Generato il ${new Date().toLocaleDateString('it-IT')}`, 14, 21);
+
+  const tableData = matches.map((m, idx) => {
+    const dateFormatted = new Date(m.date).toLocaleDateString('it-IT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    const typeLabel = m.matchType === 'timed' ? 'A Tempo (1h)' : 'Classica';
+    return [
+      idx + 1,
+      dateFormatted,
+      m.category.toUpperCase(),
+      m.player1Name,
+      m.player2Name,
+      m.score,
+      typeLabel,
+      `+${m.pointsAwardedWinner} pt`
+    ];
+  });
+
+  autoTable(doc, {
+    startY: 26,
+    head: [['#', 'Data', 'Cat.', 'Giocatore 1', 'Giocatore 2', 'Punteggio', 'Formato', 'Punti']],
+    body: tableData,
+    headStyles: { fillColor: [249, 115, 22] }, // orange-500
+    styles: { fontSize: 8, cellPadding: 2.5 },
+    columnStyles: {
+      0: { cellWidth: 10 },
+      1: { cellWidth: 22 },
+      2: { cellWidth: 20 },
+      3: { cellWidth: 42 },
+      4: { cellWidth: 42 },
+      5: { cellWidth: 24 },
+      6: { cellWidth: 22 },
+      7: { cellWidth: 16 }
+    }
+  });
+
+  doc.save(`Storico_Partite_${categoryLabel.replace(/\s+/g, '_')}.pdf`);
 }

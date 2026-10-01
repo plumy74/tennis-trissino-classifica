@@ -921,6 +921,7 @@ export default function App() {
             onDeleteRankingMatch={handleDeleteRankingMatch}
             onOpenNewTournamentModal={() => setIsTournamentModalOpen(true)}
             onDeleteTournament={handleDeleteTournament}
+            onUpdateTournament={handleUpdateTournament}
             onUpdateTournamentMatchScore={handleUpdateTournamentMatchScore}
             onClearAllData={handleClearAllData}
             onExitAdmin={() => {
@@ -932,7 +933,7 @@ export default function App() {
           />
         )}
 
-        {/* TAB 1: Classifiche (Maschile, Femminile, Doppio) */}
+        {/* TAB 1: Classifiche (Maschile, Femminile, Doppio) & Storico Partite */}
         {activeTab === 'ladder' && (
           <RankingLadder
             players={players}
@@ -987,6 +988,7 @@ export default function App() {
             tournaments={tournaments}
             onSelectPlayer={handleSelectPlayerFromAnywhere}
             onSelectTournament={handleSelectTournamentFromAnywhere}
+            onViewHistory={() => setActiveTab('ladder')}
           />
         )}
 

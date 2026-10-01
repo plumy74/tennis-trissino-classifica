@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { 
@@ -16,7 +16,8 @@ import {
   Users,
   User,
   Calendar,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { Player, PlayerCategory, RankingMatch } from '../types/tennis';
 import { calculateAge, formatBirthDate, computePlayersStatsFromMatches } from '../utils/scoring';
@@ -26,6 +27,7 @@ interface RankingLadderProps {
   players: Player[];
   rankingMatches: RankingMatch[];
   isAdmin: boolean;
+  initialTab?: 'ladder' | 'history';
   onOpenMatchModal: () => void;
   onSelectPlayer: (playerId: string) => void;
   onAddPlayer?: () => void;
@@ -36,6 +38,7 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
   players,
   rankingMatches,
   isAdmin,
+  initialTab,
   onOpenMatchModal,
   onSelectPlayer,
   onAddPlayer,
@@ -46,10 +49,16 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
   const [selectedFitRating, setSelectedFitRating] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('2026');
   const [showRulesModal, setShowRulesModal] = useState(false);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [mainTab, setMainTab] = useState<'ladder' | 'history'>(initialTab || 'ladder');
+
+  useEffect(() => {
+    if (initialTab) {
+      setMainTab(initialTab);
+    }
+  }, [initialTab]);
   const [historySearch, setHistorySearch] = useState('');
   const [historyCategoryFilter, setHistoryCategoryFilter] = useState<'all' | 'maschile' | 'femminile' | 'doppio'>('all');
-  const [historyDateFilter, setHistoryDateFilter] = useState('');
+  const [historyMonthFilter, setHistoryMonthFilter] = useState<string>('all');
   const [showFullLadder, setShowFullLadder] = useState(false);
 
   const filteredHistoryMatches = useMemo(() => {
@@ -63,13 +72,19 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
         const p2Match = m.player2Name.toLowerCase().includes(q);
         if (!p1Match && !p2Match) return false;
       }
-      if (historyDateFilter.trim()) {
-        const matchDateStr = m.date.slice(0, 10);
-        if (matchDateStr !== historyDateFilter) return false;
+      if (historyMonthFilter !== 'all') {
+        const d = new Date(m.date);
+        let monthStr = '';
+        if (!isNaN(d.getTime())) {
+          monthStr = (d.getMonth() + 1).toString().padStart(2, '0');
+        } else if (m.date && m.date.length >= 7) {
+          monthStr = m.date.slice(5, 7);
+        }
+        if (monthStr !== historyMonthFilter) return false;
       }
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [rankingMatches, historyCategoryFilter, historySearch, historyDateFilter]);
+  }, [rankingMatches, historyCategoryFilter, historySearch, historyMonthFilter]);
 
   // Calcola dinamicamente gli anni disponibili dai match reali, escludendo 2024 e 2025
   const availableYears = useMemo(() => {
@@ -208,18 +223,60 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
     doc.save(`classifica_${activeCategory}_${selectedYear}.pdf`);
   };
 
+  const handleExportHistory = () => {
+    const doc = new jsPDF();
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(234, 88, 12);
+    
+    const monthNames: Record<string, string> = {
+      '01': 'Gennaio', '02': 'Febbraio', '03': 'Marzo', '04': 'Aprile',
+      '05': 'Maggio', '06': 'Giugno', '07': 'Luglio', '08': 'Agosto',
+      '09': 'Settembre', '10': 'Ottobre', '11': 'Novembre', '12': 'Dicembre'
+    };
+    const titleText = historyMonthFilter !== 'all' && monthNames[historyMonthFilter]
+      ? `TENNIS COMUNALI TRISSINO - STORICO PARTITE (${monthNames[historyMonthFilter].toUpperCase()})`
+      : "TENNIS COMUNALI TRISSINO - STORICO PARTITE";
+    doc.text(titleText, 14, 20);
+
+    const headers = ["Data", "Categoria", "Giocatore 1", "Punteggio", "Giocatore 2", "Vincitore", "Tipo"];
+    const rows = filteredHistoryMatches.map(m => [
+      m.date.slice(0, 10),
+      m.category.toUpperCase(),
+      m.player1Name,
+      m.score,
+      m.player2Name,
+      m.winnerId === m.player1Id ? m.player1Name : m.player2Name,
+      m.matchType === 'timed' ? 'A tempo' : 'Classica'
+    ]);
+
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 28,
+      theme: 'grid',
+      headStyles: { fillColor: [249, 115, 22] },
+      bodyStyles: { fontSize: 8 }
+    });
+
+    const filename = historyMonthFilter !== 'all' && monthNames[historyMonthFilter]
+      ? `storico_partite_${monthNames[historyMonthFilter].toLowerCase()}.pdf`
+      : "storico_partite_trissino.pdf";
+    doc.save(filename);
+  };
+
   return (
     <div className="space-y-6">
-      
-      {/* Category Tabs: Maschile / Femminile / Doppio */}
+      {/* 1. Category Tabs: Maschile / Femminile / Doppio (sempre visibili in alto) */}
       <div className="flex items-center gap-2 p-1.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm shadow-slate-100/50 overflow-x-auto">
         <button
           onClick={() => {
             setActiveCategory('maschile');
             setSearchTerm('');
             setShowFullLadder(false);
+            setHistoryCategoryFilter('maschile');
           }}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all cursor-pointer ${
             activeCategory === 'maschile'
               ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10 scale-[1.01]'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -238,8 +295,9 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
             setActiveCategory('femminile');
             setSearchTerm('');
             setShowFullLadder(false);
+            setHistoryCategoryFilter('femminile');
           }}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all cursor-pointer ${
             activeCategory === 'femminile'
               ? 'bg-rose-500 text-white shadow-md shadow-rose-500/10 scale-[1.01]'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -258,8 +316,9 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
             setActiveCategory('doppio');
             setSearchTerm('');
             setShowFullLadder(false);
+            setHistoryCategoryFilter('doppio');
           }}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all cursor-pointer ${
             activeCategory === 'doppio'
               ? 'bg-orange-500 text-white shadow-md shadow-orange-500/10 scale-[1.01]'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -273,6 +332,175 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
           </span>
         </button>
       </div>
+
+      {/* 2. Subito sotto i selettori di categoria: Switcher tra Classifica Ufficiale e Storico Partite */}
+      <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl w-full sm:w-fit border border-slate-200/80 shadow-sm">
+        <button
+          onClick={() => setMainTab('ladder')}
+          className={`flex-1 sm:flex-initial flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+            mainTab === 'ladder'
+              ? 'bg-white text-slate-900 shadow-sm font-extrabold'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>🏆</span>
+          <span>Classifica Ufficiale ({getCategoryLabel(activeCategory)})</span>
+        </button>
+        <button
+          onClick={() => setMainTab('history')}
+          className={`flex-1 sm:flex-initial flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+            mainTab === 'history'
+              ? 'bg-white text-slate-900 shadow-sm font-extrabold'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>📜</span>
+          <span>Storico Partite & Risultati ({rankingMatches.length})</span>
+        </button>
+      </div>
+
+      {/* 3. Vista Storico Partite & Risultati */}
+      {mainTab === 'history' && (
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-6 animate-fadeIn">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+            <div>
+              <h2 className="font-display font-extrabold text-xl text-slate-900">
+                Storico Partite & Archivio Risultati
+              </h2>
+              <p className="text-sm text-slate-600">
+                Consulta tutti i risultati degli incontri disputati con filtri avanzati ed esportazione in PDF.
+              </p>
+            </div>
+            <button
+              onClick={handleExportHistory}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shrink-0"
+              title="Esporta storico partite in PDF"
+            >
+              <Download className="w-4 h-4 text-white" />
+              <span>Esporta Storico PDF</span>
+            </button>
+          </div>
+
+          {/* Filters Bar */}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Cerca per nome atleta..."
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-orange-500"
+              />
+            </div>
+            <select
+              value={historyCategoryFilter}
+              onChange={(e) => setHistoryCategoryFilter(e.target.value as any)}
+              className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-orange-500 cursor-pointer font-semibold"
+            >
+              <option value="all">Tutte le categorie</option>
+              <option value="maschile">Singolare Maschile</option>
+              <option value="femminile">Singolare Femminile</option>
+              <option value="doppio">Classifica Doppio</option>
+            </select>
+            <div className="relative">
+              <select
+                value={historyMonthFilter}
+                onChange={(e) => setHistoryMonthFilter(e.target.value)}
+                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-orange-500 cursor-pointer font-semibold"
+              >
+                <option value="all">📅 Tutti i mesi</option>
+                <option value="01">Gennaio</option>
+                <option value="02">Febbraio</option>
+                <option value="03">Marzo</option>
+                <option value="04">Aprile</option>
+                <option value="05">Maggio</option>
+                <option value="06">Giugno</option>
+                <option value="07">Luglio</option>
+                <option value="08">Agosto</option>
+                <option value="09">Settembre</option>
+                <option value="10">Ottobre</option>
+                <option value="11">Novembre</option>
+                <option value="12">Dicembre</option>
+              </select>
+              {historyMonthFilter !== 'all' && (
+                <button
+                  onClick={() => setHistoryMonthFilter('all')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-700 font-bold bg-white px-1"
+                  title="Resetta mese"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Match List */}
+          <div className="space-y-3">
+            {filteredHistoryMatches.length === 0 ? (
+              <div className="text-center py-16 text-slate-400 space-y-2">
+                <span className="text-4xl">🎾</span>
+                <p className="text-sm font-medium">Nessuna partita trovata con i filtri selezionati.</p>
+              </div>
+            ) : (
+              filteredHistoryMatches.map(m => {
+                const isP1Winner = m.winnerId === m.player1Id;
+                const dateFormatted = new Date(m.date).toLocaleDateString('it-IT', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+
+                return (
+                  <div key={m.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-slate-300 transition-all space-y-2.5">
+                    <div className="flex items-center justify-between text-xs text-slate-500 border-b border-slate-100 pb-2">
+                      <span className="font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
+                        {m.category === 'maschile' ? 'Sing. Maschile' : m.category === 'femminile' ? 'Sing. Femminile' : 'Doppio'} {m.matchType === 'timed' ? '• ⏱️ A Tempo (1h)' : '• 🎾 Classica'}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span>📅</span> {dateFormatted} {m.court ? `• ${m.court}` : ''}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3">
+                      <div className={`flex-1 text-left ${isP1Winner ? 'font-black text-slate-900' : 'text-slate-600'}`}>
+                        <div className="flex items-center gap-1.5">
+                          {isP1Winner && <span className="text-amber-500">🏆</span>}
+                          <span className="text-sm">{m.player1Name}</span>
+                          <span className="text-[11px] text-slate-400 font-normal">(#{m.player1RankAtMatch})</span>
+                        </div>
+                      </div>
+
+                      <div className="px-3.5 py-1 bg-slate-100 rounded-xl font-mono font-bold text-slate-800 text-sm border border-slate-200">
+                        {m.score}
+                      </div>
+
+                      <div className={`flex-1 text-right ${!isP1Winner ? 'font-black text-slate-900' : 'text-slate-600'}`}>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span className="text-[11px] text-slate-400 font-normal">(#{m.player2RankAtMatch})</span>
+                          <span className="text-sm">{m.player2Name}</span>
+                          {!isP1Winner && <span className="text-amber-500">🏆</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                      <span>🎯 Regola: <strong>{m.ruleApplied}</strong></span>
+                      <span className="text-emerald-600 font-bold">+{m.pointsAwardedWinner} pt vincitore</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 4. Vista Classifica Ufficiale */}
+      {mainTab === 'ladder' && (
+        <div className="space-y-6">
 
       {/* Banner Regolamento & Header */}
       <div className="bg-gradient-to-br from-slate-50 via-slate-100/50 to-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm shadow-slate-100/80 relative overflow-hidden">
@@ -309,11 +537,11 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={handleExportPDF}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               title="Esporta classifica in PDF"
             >
-              <span>📄</span>
-              <span>Esporta PDF</span>
+              <Download className="w-4 h-4 text-white" />
+              <span>Esporta Classifica PDF</span>
             </button>
 
             <button
@@ -322,15 +550,6 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
             >
               <span className="text-orange-500">ℹ️</span>
               <span>Regole Punteggio</span>
-            </button>
-
-            <button
-              onClick={() => setShowHistoryModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
-              title="Storico completo partite con filtri"
-            >
-              <span>📜</span>
-              <span>Storico Partite</span>
             </button>
 
             {/* Azioni riservate SOLO all'Area Gestore */}
@@ -475,152 +694,6 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                   className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/10 cursor-pointer transition-colors"
                 >
                   Ho capito, Chiudi Regolamento
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Storico Partite Modal */}
-        {showHistoryModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-orange-500" />
-                  <h3 className="font-display font-extrabold text-base sm:text-lg text-slate-900">
-                    Storico Partite • Archivio Risultati ({filteredHistoryMatches.length})
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setShowHistoryModal(false)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Filters Bar */}
-              <div className="p-4 bg-slate-50/80 border-b border-slate-200/60 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* Search Name */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Cerca per nome atleta..."
-                    value={historySearch}
-                    onChange={(e) => setHistorySearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-orange-500"
-                  />
-                </div>
-
-                {/* Category / Gender Filter */}
-                <select
-                  value={historyCategoryFilter}
-                  onChange={(e) => setHistoryCategoryFilter(e.target.value as any)}
-                  className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-orange-500 cursor-pointer font-semibold"
-                >
-                  <option value="all">Tutte le categorie</option>
-                  <option value="maschile">Singolare Maschile</option>
-                  <option value="femminile">Singolare Femminile</option>
-                  <option value="doppio">Classifica Doppio</option>
-                </select>
-
-                {/* Date Filter */}
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={historyDateFilter}
-                    onChange={(e) => setHistoryDateFilter(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-orange-500 cursor-pointer"
-                  />
-                  {historyDateFilter && (
-                    <button
-                      onClick={() => setHistoryDateFilter('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-700"
-                      title="Annulla data"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Scrollable Match List */}
-              <div className="p-6 overflow-y-auto space-y-3 max-h-[60vh]">
-                {filteredHistoryMatches.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400 space-y-2">
-                    <span className="text-3xl">🎾</span>
-                    <p className="text-sm font-medium">Nessuna partita trovata con i filtri selezionati.</p>
-                  </div>
-                ) : (
-                  filteredHistoryMatches.map(m => {
-                    const isP1Winner = m.winnerId === m.player1Id;
-                    const dateFormatted = new Date(m.date).toLocaleDateString('it-IT', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    });
-
-                    return (
-                      <div key={m.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-slate-300 transition-all space-y-2.5">
-                        <div className="flex items-center justify-between text-xs text-slate-500 border-b border-slate-100 pb-2">
-                          <span className="font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
-                            {m.category === 'maschile' ? 'Sing. Maschile' : m.category === 'femminile' ? 'Sing. Femminile' : 'Doppio'} {m.matchType === 'timed' ? '• ⏱️ A Tempo (1h)' : '• 🎾 Classica'}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <span>📅</span> {dateFormatted} {m.court ? `• ${m.court}` : ''}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-3">
-                          {/* Player 1 */}
-                          <div className={`flex-1 text-left ${isP1Winner ? 'font-black text-slate-900' : 'text-slate-600'}`}>
-                            <div className="flex items-center gap-1.5">
-                              {isP1Winner && <span className="text-amber-500">🏆</span>}
-                              <span className="text-sm">{m.player1Name}</span>
-                              <span className="text-[11px] text-slate-400 font-normal">(#{m.player1RankAtMatch})</span>
-                            </div>
-                          </div>
-
-                          {/* Score */}
-                          <div className="px-3 py-1 bg-slate-100 rounded-xl font-mono font-bold text-slate-800 text-sm border border-slate-200">
-                            {m.score}
-                          </div>
-
-                          {/* Player 2 */}
-                          <div className={`flex-1 text-right ${!isP1Winner ? 'font-black text-slate-900' : 'text-slate-600'}`}>
-                            <div className="flex items-center justify-end gap-1.5">
-                              <span className="text-[11px] text-slate-400 font-normal">(#{m.player2RankAtMatch})</span>
-                              <span className="text-sm">{m.player2Name}</span>
-                              {!isP1Winner && <span className="text-amber-500">🏆</span>}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                          <span>🎯 Regola: <strong>{m.ruleApplied}</strong></span>
-                          <span className="text-emerald-600 font-bold">+{m.pointsAwardedWinner} pt vincitore</span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-                <span className="text-xs text-slate-500">
-                  Totale partite in archivio: <strong>{rankingMatches.length}</strong>
-                </span>
-                <button
-                  onClick={() => setShowHistoryModal(false)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md cursor-pointer transition-colors"
-                >
-                  Chiudi Archivio
                 </button>
               </div>
             </div>
@@ -970,6 +1043,8 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
             </div>
           )}
         </div>
+      )}
+      </div>
       )}
     </div>
   );

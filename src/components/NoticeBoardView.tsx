@@ -21,6 +21,7 @@ interface NoticeBoardViewProps {
   tournaments: Tournament[];
   onSelectPlayer: (id: string) => void;
   onSelectTournament: (id: string) => void;
+  onViewHistory?: () => void;
 }
 
 export const NoticeBoardView: React.FC<NoticeBoardViewProps> = ({
@@ -29,7 +30,8 @@ export const NoticeBoardView: React.FC<NoticeBoardViewProps> = ({
   rankingMatches,
   tournaments,
   onSelectPlayer,
-  onSelectTournament
+  onSelectTournament,
+  onViewHistory
 }) => {
   const topMaschile = players.filter(p => (p.category || 'maschile') === 'maschile').slice(0, 3);
   const topFemminile = players.filter(p => p.category === 'femminile').slice(0, 3);
@@ -275,16 +277,27 @@ export const NoticeBoardView: React.FC<NoticeBoardViewProps> = ({
 
       {/* Ultimi Risultati Registrati */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm shadow-slate-100">
-        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div className="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-600" />
             <h3 className="font-display font-bold text-base text-slate-900">
               Ultimi Incontri Registrati nel Circolo
             </h3>
           </div>
-          <span className="text-xs text-slate-500">
-            Risultati ufficiali convalidati
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500 hidden sm:inline">
+              Risultati ufficiali convalidati
+            </span>
+            {onViewHistory && (
+              <button
+                onClick={onViewHistory}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm shadow-orange-500/15 transition-all cursor-pointer hover:scale-[1.02]"
+              >
+                <span>📜</span>
+                <span>Vedi Tutto lo Storico ({rankingMatches.length})</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">

@@ -14,7 +14,9 @@ import {
   Clock,
   Sparkles,
   Award,
-  X
+  X,
+  Edit3,
+  Check
 } from 'lucide-react';
 import { Tournament, TournamentMatch, TournamentParticipant, RoundRobinStanding } from '../types/tennis';
 import { calculateRoundRobinStandings } from '../utils/tournamentGenerator';
@@ -109,6 +111,28 @@ export const TournamentView: React.FC<TournamentViewProps> = ({
 
   const [editingDeadlineRound, setEditingDeadlineRound] = useState<string | null>(null);
   const [deadlineDateInput, setDeadlineDateInput] = useState<string>('');
+
+  // Modifica Nome Torneo
+  const [isEditingName, setIsEditingName] = useState<boolean>(false);
+  const [editedName, setEditedName] = useState<string>('');
+  const [isSavingName, setIsSavingName] = useState<boolean>(false);
+
+  const handleSaveTournamentName = async () => {
+    if (!editedName.trim() || !onUpdateTournament || !currentTournament) return;
+    try {
+      setIsSavingName(true);
+      await onUpdateTournament({
+        ...currentTournament,
+        name: editedName.trim()
+      });
+      setIsEditingName(false);
+    } catch (err) {
+      console.error('Errore aggiornamento nome torneo:', err);
+      alert('Errore durante l\'aggiornamento del nome del torneo.');
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   const bracketContainerRef = useRef<HTMLDivElement>(null);
   const [bracketPaths, setBracketPaths] = useState<string[]>([]);
@@ -336,17 +360,69 @@ export const TournamentView: React.FC<TournamentViewProps> = ({
             </div>
 
             <div className="flex items-center gap-3 mt-1">
-              <select
-                value={currentTournament.id}
-                onChange={(e) => onSelectTournament(e.target.value)}
-                className="font-display font-extrabold text-xl sm:text-2xl text-slate-900 bg-white border border-slate-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-orange-500 max-w-full cursor-pointer shadow-sm"
-              >
-                {tournaments.map(t => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+              {!isEditingName ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <select
+                    value={currentTournament.id}
+                    onChange={(e) => onSelectTournament(e.target.value)}
+                    className="font-display font-extrabold text-xl sm:text-2xl text-slate-900 bg-white border border-slate-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-orange-500 max-w-full cursor-pointer shadow-sm"
+                  >
+                    {tournaments.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {onUpdateTournament && (
+                    <button
+                      onClick={() => {
+                        setEditedName(currentTournament.name);
+                        setIsEditingName(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-orange-50 border border-slate-200 hover:border-orange-300 text-slate-600 hover:text-orange-600 transition-all text-xs font-bold shadow-sm cursor-pointer"
+                      title="Modifica nome del torneo"
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-orange-500" />
+                      <span>Modifica Nome</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-wrap bg-white p-1.5 rounded-2xl border-2 border-orange-400 shadow-md">
+                  <input
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    className="font-display font-bold text-base sm:text-lg text-slate-900 px-3 py-1 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-orange-500 min-w-[240px]"
+                    placeholder="Nome torneo..."
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSaveTournamentName();
+                      } else if (e.key === 'Escape') {
+                        setIsEditingName(false);
+                      }
+                    }}
+                  />
+                  <button
+                    disabled={isSavingName || !editedName.trim()}
+                    onClick={handleSaveTournamentName}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{isSavingName ? 'Salvataggio...' : 'Salva Nome'}</span>
+                  </button>
+                  <button
+                    onClick={() => setIsEditingName(false)}
+                    className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                    title="Annulla"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
             
             <p className="text-xs text-slate-500 flex items-center gap-2 pt-0.5 font-medium">
