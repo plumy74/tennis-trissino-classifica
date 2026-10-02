@@ -11,7 +11,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Player, RankingMatch, Tournament, ClubSettings } from '../types/tennis';
-import { calculateAge } from '../utils/scoring';
+import { calculateAge, computePlayersStatsFromMatches } from '../utils/scoring';
 import { ClubLogo } from './ClubLogo';
 
 interface NoticeBoardViewProps {
@@ -33,11 +33,19 @@ export const NoticeBoardView: React.FC<NoticeBoardViewProps> = ({
   onSelectTournament,
   onViewHistory
 }) => {
-  const topMaschile = players
+  const activeSeasonMatches = React.useMemo(() => {
+    return rankingMatches.filter(m => m.date && m.date.startsWith('2026'));
+  }, [rankingMatches]);
+
+  const activePlayers = React.useMemo(() => {
+    return computePlayersStatsFromMatches(players, activeSeasonMatches);
+  }, [players, activeSeasonMatches]);
+
+  const topMaschile = activePlayers
     .filter(p => (p.category || 'maschile') === 'maschile')
     .sort((a, b) => (a.rank || 999) - (b.rank || 999) || b.points - a.points)
     .slice(0, 3);
-  const topFemminile = players
+  const topFemminile = activePlayers
     .filter(p => p.category === 'femminile')
     .sort((a, b) => (a.rank || 999) - (b.rank || 999) || b.points - a.points)
     .slice(0, 3);
