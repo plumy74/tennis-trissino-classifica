@@ -480,6 +480,27 @@ export default function App() {
         });
       }
 
+      const isDraw = match.winnerId === 'draw' || match.loserId === 'draw';
+
+      if (isDraw) {
+        p1.points += match.pointsAwardedWinner !== undefined ? match.pointsAwardedWinner : 5;
+        p1.matchesPlayed += 1;
+        p1.setsWon += p1SetsWon;
+        p1.setsLost += p2SetsWon;
+        p1.gamesWon += p1GamesWon;
+        p1.gamesLost += p2GamesWon;
+        p1.currentStreak = 0;
+
+        p2.points += match.pointsAwardedWinner !== undefined ? match.pointsAwardedWinner : 5;
+        p2.matchesPlayed += 1;
+        p2.setsWon += p2SetsWon;
+        p2.setsLost += p1SetsWon;
+        p2.gamesWon += p2GamesWon;
+        p2.gamesLost += p1GamesWon;
+        p2.currentStreak = 0;
+        return;
+      }
+
       const winner = playerMap.get(wId);
       if (winner) {
         const isWinnerP1 = wId === match.player1Id;
