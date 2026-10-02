@@ -313,8 +313,9 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
     let totalDeltaAll = 0;
     playerRankingMatches.forEach(m => {
-      const isWinner = m.winnerId === currentPlayer.id;
-      const delta = isWinner ? m.pointsAwardedWinner : -m.pointsDeductedLoser;
+      const isDraw = m.winnerId === 'draw';
+      const isWinner = !isDraw && m.winnerId === currentPlayer.id;
+      const delta = isDraw ? (m.pointsAwardedWinner || 5) : (isWinner ? m.pointsAwardedWinner : -m.pointsDeductedLoser);
       totalDeltaAll += delta;
     });
 
@@ -328,15 +329,18 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
     });
 
     playerRankingMatches.forEach((m) => {
-      const isWinner = m.winnerId === currentPlayer.id;
-      const delta = isWinner ? m.pointsAwardedWinner : -m.pointsDeductedLoser;
+      const isDraw = m.winnerId === 'draw';
+      const isWinner = !isDraw && m.winnerId === currentPlayer.id;
+      const delta = isDraw ? (m.pointsAwardedWinner || 5) : (isWinner ? m.pointsAwardedWinner : -m.pointsDeductedLoser);
       currentBase += delta;
       const dateFormatted = new Date(m.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' });
       const opponentName = m.player1Id === currentPlayer.id ? m.player2Name : m.player1Name;
       data.push({
         dateStr: dateFormatted,
         points: Math.max(0, currentBase),
-        matchInfo: `${isWinner ? 'Vittoria' : 'Sconfitta'} vs ${opponentName} (${m.score})`
+        matchInfo: isDraw 
+          ? `Pareggio vs ${opponentName} (${m.score})`
+          : `${isWinner ? 'Vittoria' : 'Sconfitta'} vs ${opponentName} (${m.score})`
       });
     });
 
