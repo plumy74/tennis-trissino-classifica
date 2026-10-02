@@ -138,6 +138,7 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
   const [mSet2P1, setMSet2P1] = useState<number>(6);
   const [mSet2P2, setMSet2P2] = useState<number>(3);
   const [mHasSet3, setMHasSet3] = useState<boolean>(false);
+  const [mIsDrawChecked, setMIsDrawChecked] = useState<boolean>(false);
   const [mSet3P1, setMSet3P1] = useState<number>(10);
   const [mSet3P2, setMSet3P2] = useState<number>(8);
   const [mMatchType, setMMatchType] = useState<'classic' | 'timed'>('classic');
@@ -176,6 +177,7 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
     let formattedScore = '';
     let winnerId: string | null = null;
     let loserId: string | null = null;
+    const isDrawMatch = (mMatchType === 'timed' && mTimedGamesP1 === mTimedGamesP2) || (mMatchType === 'classic' && mIsDrawChecked);
 
     if (mMatchType === 'classic') {
       sets.push({ p1: mSet1P1, p2: mSet1P2 });
@@ -192,7 +194,10 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
         else if (mSet3P2 > mSet3P1) p2SetsWon++;
       }
 
-      if (p1SetsWon > p2SetsWon) {
+      if (isDrawMatch) {
+        winnerId = 'draw';
+        loserId = 'draw';
+      } else if (p1SetsWon > p2SetsWon) {
         winnerId = mPlayer1Id;
         loserId = mPlayer2Id;
       } else if (p2SetsWon > p1SetsWon) {
@@ -202,10 +207,13 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
 
       const scoreParts = [`${mSet1P1}-${mSet1P2}`, `${mSet2P1}-${mSet2P2}`];
       if (mHasSet3) scoreParts.push(`${mSet3P1}-${mSet3P2}`);
-      formattedScore = scoreParts.join(' ');
+      formattedScore = scoreParts.join(' ') + (isDrawMatch ? ' (Incomp./Par.)' : '');
     } else {
       sets.push({ p1: mTimedGamesP1, p2: mTimedGamesP2 });
-      if (mTimedGamesP1 > mTimedGamesP2) {
+      if (isDrawMatch) {
+        winnerId = 'draw';
+        loserId = 'draw';
+      } else if (mTimedGamesP1 > mTimedGamesP2) {
         winnerId = mPlayer1Id;
         loserId = mPlayer2Id;
         p1SetsWon = 1;
@@ -214,11 +222,21 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
         loserId = mPlayer1Id;
         p2SetsWon = 1;
       }
-      formattedScore = `${mTimedGamesP1}-${mTimedGamesP2} (1h)`;
+      formattedScore = `${mTimedGamesP1}-${mTimedGamesP2} (1h)` + (isDrawMatch ? ' (Par.)' : '');
     }
 
     let ruleInfo = null;
-    if (winnerId && loserId && p1 && p2) {
+    if (isDrawMatch) {
+      ruleInfo = {
+        winnerPointsEarned: 5,
+        loserPointsLost: 0,
+        ruleDescription: 'Incontro terminato in Pareggio / Incompleto (+5 pt ciascuno)',
+        rankDiff: 0,
+        isHigherRank: false,
+        isSameRank: true,
+        isLowerRank: false
+      };
+    } else if (winnerId && loserId && p1 && p2) {
       const winner = winnerId === p1.id ? p1 : p2;
       const loser = loserId === p1.id ? p1 : p2;
       ruleInfo = calculateRankingPoints(winner.rank, loser.rank);
@@ -231,9 +249,10 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
       loserId,
       formattedScore,
       setsList: sets,
-      ruleInfo
+      ruleInfo,
+      isDraw: isDrawMatch
     };
-  }, [mMatchType, mPlayer1Id, mPlayer2Id, mSet1P1, mSet1P2, mSet2P1, mSet2P2, mHasSet3, mSet3P1, mSet3P2, mTimedGamesP1, mTimedGamesP2, p1, p2]);
+  }, [mMatchType, mPlayer1Id, mPlayer2Id, mSet1P1, mSet1P2, mSet2P1, mSet2P2, mHasSet3, mSet3P1, mSet3P2, mTimedGamesP1, mTimedGamesP2, p1, p2, mIsDrawChecked]);
 
   // ==========================================
   // SECTION 3: TOURNAMENT MANAGEMENT STATE
@@ -539,15 +558,17 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
       return;
     }
 
-    if (!matchCalculation.winnerId || !matchCalculation.loserId || !matchCalculation.ruleInfo) {
+    const isDraw = matchCalculation.isDraw;
+
+    if (!isDraw && (!matchCalculation.winnerId || !matchCalculation.loserId || !matchCalculation.ruleInfo)) {
       setMatchErrorMsg('Il punteggio inserito non determina un vincitore univoco.');
       return;
     }
 
     try {
       setMatchSubmitting(true);
-      const winner = matchCalculation.winnerId === p1.id ? p1 : p2;
-      const loser = matchCalculation.loserId === p1.id ? p1 : p2;
+      const winnerId = isDraw ? 'draw' : matchCalculation.winnerId;
+      const loserId = isDraw ? 'draw' : matchCalculation.loserId;
       const calc = matchCalculation.ruleInfo;
 
       const matchId = `match_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -562,13 +583,13 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
         player2Id: p2.id,
         player2Name: p2.partnerName ? `${p2.name} / ${p2.partnerName}` : p2.name,
         player2RankAtMatch: p2.rank,
-        winnerId: winner.id,
-        loserId: loser.id,
+        winnerId: winnerId as string,
+        loserId: loserId as string,
         score: matchCalculation.formattedScore,
         sets: matchCalculation.setsList,
-        pointsAwardedWinner: calc.winnerPointsEarned,
-        pointsDeductedLoser: calc.loserPointsLost,
-        ruleApplied: calc.ruleDescription,
+        pointsAwardedWinner: calc ? calc.winnerPointsEarned : 5,
+        pointsDeductedLoser: calc ? calc.loserPointsLost : 0,
+        ruleApplied: calc ? calc.ruleDescription : 'Incontro terminato in Pareggio (+5 pt ciascuno)',
         court: mCourt,
         notes: mNotes,
         status: 'completed',
@@ -576,7 +597,6 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
       };
 
       // Aggiorna statistiche e punti dei due giocatori
-      const isP1Winner = winner.id === p1.id;
       const p1SetsWon = matchCalculation.p1SetsWon;
       const p1SetsLost = matchCalculation.p2SetsWon;
       const p2SetsWon = matchCalculation.p2SetsWon;
@@ -593,42 +613,77 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
         p2GamesLost += s.p1;
       });
 
-      const updatedP1: Player = {
-        ...p1,
-        points: isP1Winner ? p1.points + calc.winnerPointsEarned : Math.max(0, p1.points - calc.loserPointsLost),
-        matchesPlayed: p1.matchesPlayed + 1,
-        matchesWon: isP1Winner ? p1.matchesWon + 1 : p1.matchesWon,
-        matchesLost: !isP1Winner ? p1.matchesLost + 1 : p1.matchesLost,
-        setsWon: p1.setsWon + p1SetsWon,
-        setsLost: p1.setsLost + p1SetsLost,
-        gamesWon: p1.gamesWon + p1GamesWon,
-        gamesLost: p1.gamesLost + p1GamesLost,
-        currentStreak: isP1Winner ? (p1.currentStreak > 0 ? p1.currentStreak + 1 : 1) : (p1.currentStreak < 0 ? p1.currentStreak - 1 : -1),
-        bestStreak: isP1Winner && p1.currentStreak + 1 > p1.bestStreak ? p1.currentStreak + 1 : p1.bestStreak,
-        updatedAt: new Date().toISOString()
-      };
+      let updatedP1: Player;
+      let updatedP2: Player;
 
-      const updatedP2: Player = {
-        ...p2,
-        points: !isP1Winner ? p2.points + calc.winnerPointsEarned : Math.max(0, p2.points - calc.loserPointsLost),
-        matchesPlayed: p2.matchesPlayed + 1,
-        matchesWon: !isP1Winner ? p2.matchesWon + 1 : p2.matchesWon,
-        matchesLost: isP1Winner ? p2.matchesLost + 1 : p2.matchesLost,
-        setsWon: p2.setsWon + p2SetsWon,
-        setsLost: p2.setsLost + p2SetsLost,
-        gamesWon: p2.gamesWon + p2GamesWon,
-        gamesLost: p2.gamesLost + p2GamesLost,
-        currentStreak: !isP1Winner ? (p2.currentStreak > 0 ? p2.currentStreak + 1 : 1) : (p2.currentStreak < 0 ? p2.currentStreak - 1 : -1),
-        bestStreak: !isP1Winner && p2.currentStreak + 1 > p2.bestStreak ? p2.currentStreak + 1 : p2.bestStreak,
-        updatedAt: new Date().toISOString()
-      };
+      if (isDraw) {
+        updatedP1 = {
+          ...p1,
+          points: p1.points + 5,
+          matchesPlayed: p1.matchesPlayed + 1,
+          setsWon: p1.setsWon + p1SetsWon,
+          setsLost: p1.setsLost + p1SetsLost,
+          gamesWon: p1.gamesWon + p1GamesWon,
+          gamesLost: p1.gamesLost + p1GamesLost,
+          currentStreak: 0,
+          updatedAt: new Date().toISOString()
+        };
+
+        updatedP2 = {
+          ...p2,
+          points: p2.points + 5,
+          matchesPlayed: p2.matchesPlayed + 1,
+          setsWon: p2.setsWon + p2SetsWon,
+          setsLost: p2.setsLost + p2SetsLost,
+          gamesWon: p2.gamesWon + p2GamesWon,
+          gamesLost: p2.gamesLost + p2GamesLost,
+          currentStreak: 0,
+          updatedAt: new Date().toISOString()
+        };
+      } else {
+        const isP1Winner = winnerId === p1.id;
+        updatedP1 = {
+          ...p1,
+          points: isP1Winner ? p1.points + (calc ? calc.winnerPointsEarned : 15) : Math.max(0, p1.points - (calc ? calc.loserPointsLost : 5)),
+          matchesPlayed: p1.matchesPlayed + 1,
+          matchesWon: isP1Winner ? p1.matchesWon + 1 : p1.matchesWon,
+          matchesLost: !isP1Winner ? p1.matchesLost + 1 : p1.matchesLost,
+          setsWon: p1.setsWon + p1SetsWon,
+          setsLost: p1.setsLost + p1SetsLost,
+          gamesWon: p1.gamesWon + p1GamesWon,
+          gamesLost: p1.gamesLost + p1GamesLost,
+          currentStreak: isP1Winner ? (p1.currentStreak > 0 ? p1.currentStreak + 1 : 1) : (p1.currentStreak < 0 ? p1.currentStreak - 1 : -1),
+          bestStreak: isP1Winner && p1.currentStreak + 1 > p1.bestStreak ? p1.currentStreak + 1 : p1.bestStreak,
+          updatedAt: new Date().toISOString()
+        };
+
+        updatedP2 = {
+          ...p2,
+          points: !isP1Winner ? p2.points + (calc ? calc.winnerPointsEarned : 15) : Math.max(0, p2.points - (calc ? calc.loserPointsLost : 5)),
+          matchesPlayed: p2.matchesPlayed + 1,
+          matchesWon: !isP1Winner ? p2.matchesWon + 1 : p2.matchesWon,
+          matchesLost: isP1Winner ? p2.matchesLost + 1 : p2.matchesLost,
+          setsWon: p2.setsWon + p2SetsWon,
+          setsLost: p2.setsLost + p2SetsLost,
+          gamesWon: p2.gamesWon + p2GamesWon,
+          gamesLost: p2.gamesLost + p2GamesLost,
+          currentStreak: !isP1Winner ? (p2.currentStreak > 0 ? p2.currentStreak + 1 : 1) : (p2.currentStreak < 0 ? p2.currentStreak - 1 : -1),
+          bestStreak: !isP1Winner && p2.currentStreak + 1 > p2.bestStreak ? p2.currentStreak + 1 : p2.bestStreak,
+          updatedAt: new Date().toISOString()
+        };
+      }
 
       const otherPlayers = players.filter(p => p.id !== p1.id && p.id !== p2.id);
       await onSaveRankingMatch(newMatch, [...otherPlayers, updatedP1, updatedP2]);
 
       setIsNewMatchModalOpen(false);
       confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
-      setMatchSuccessMsg(`Partita registrata con successo! Vincitore: ${winner.name} (+${calc.winnerPointsEarned} pt). Classifica aggiornata.`);
+      if (isDraw) {
+        setMatchSuccessMsg('Incontro terminato in Pareggio registrato con successo! (+5 pt ciascuno). Classifica aggiornata.');
+      } else {
+        const winner = winnerId === p1.id ? p1 : p2;
+        setMatchSuccessMsg(`Partita registrata con successo! Vincitore: ${winner.name} (+${calc ? calc.winnerPointsEarned : 15} pt). Classifica aggiornata.`);
+      }
       setMNotes('');
       setTimeout(() => setMatchSuccessMsg(null), 5000);
     } catch (err) {
@@ -1781,19 +1836,36 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                 {/* Classic Score inputs */}
                 {mMatchType === 'classic' && (
                 <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
                       3. Punteggio dei Set
                     </span>
-                    <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={mHasSet3}
-                        onChange={(e) => setMHasSet3(e.target.checked)}
-                        className="rounded border-slate-700 text-emerald-500 focus:ring-emerald-500"
-                      />
-                      <span>Includi 3° Set / Super Tie-Break</span>
-                    </label>
+                    <div className="flex flex-col gap-1.5 self-start sm:self-center">
+                      <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={mHasSet3}
+                          onChange={(e) => {
+                            setMHasSet3(e.target.checked);
+                            if (e.target.checked) setMIsDrawChecked(false);
+                          }}
+                          className="rounded border-slate-700 text-emerald-500 focus:ring-emerald-500"
+                        />
+                        <span>Includi 3° Set / Super Tie-Break</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-xs text-amber-400 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={mIsDrawChecked}
+                          onChange={(e) => {
+                            setMIsDrawChecked(e.target.checked);
+                            if (e.target.checked) setMHasSet3(false);
+                          }}
+                          className="rounded border-slate-700 text-amber-500 focus:ring-amber-500"
+                        />
+                        <span>Incontro Incompleto / Pareggio (+5 pt a testa)</span>
+                      </label>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1876,19 +1948,19 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
 
                 {/* Score Preview with Official Club Rule Applied */}
                 {matchCalculation.ruleInfo && p1 && p2 && (
-                  <div className="bg-gradient-to-r from-emerald-950/40 via-slate-950 to-slate-950 border border-emerald-500/40 rounded-2xl p-4 sm:p-5">
-                    <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">
+                  <div className={`bg-gradient-to-r ${matchCalculation.isDraw ? 'from-amber-950/40 border-amber-500/40 text-amber-300' : 'from-emerald-950/40 border-emerald-500/40 text-emerald-300'} via-slate-950 to-slate-950 border rounded-2xl p-4 sm:p-5`}>
+                    <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-2 ${matchCalculation.isDraw ? 'text-amber-400' : 'text-emerald-400'}`}>
                       <Sparkles className="w-4 h-4" />
-                      Anteprima Calcolo Regolamento Circolo
+                      {matchCalculation.isDraw ? 'Anteprima Calcolo Pareggio (Ipotesi 3)' : 'Anteprima Calcolo Regolamento Circolo'}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                       <div>
-                        <span className="text-xs text-slate-400 block">Vincitore ({matchCalculation.formattedScore}):</span>
+                        <span className="text-xs text-slate-400 block">{matchCalculation.isDraw ? `Giocatore 1 (${matchCalculation.formattedScore}):` : `Vincitore (${matchCalculation.formattedScore}):`}</span>
                         <strong className="text-lg text-white">
-                          {matchCalculation.winnerId === p1.id ? p1.name : p2.name}
+                          {matchCalculation.isDraw ? p1.name : (matchCalculation.winnerId === p1.id ? p1.name : p2.name)}
                         </strong>
-                        <div className="text-sm font-black text-emerald-400 mt-0.5">
+                        <div className={`text-sm font-black mt-0.5 ${matchCalculation.isDraw ? 'text-amber-400' : 'text-emerald-400'}`}>
                           +{matchCalculation.ruleInfo.winnerPointsEarned} PUNTI IN CLASSIFICA
                         </div>
                         <p className="text-xs text-slate-400 mt-1">
@@ -1897,12 +1969,12 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                       </div>
 
                       <div>
-                        <span className="text-xs text-slate-400 block">Sconfitto:</span>
+                        <span className="text-xs text-slate-400 block">{matchCalculation.isDraw ? 'Giocatore 2:' : 'Sconfitto:'}</span>
                         <strong className="text-lg text-white">
-                          {matchCalculation.loserId === p1.id ? p1.name : p2.name}
+                          {matchCalculation.isDraw ? p2.name : (matchCalculation.loserId === p1.id ? p1.name : p2.name)}
                         </strong>
-                        <div className="text-sm font-black text-rose-400 mt-0.5">
-                          -{matchCalculation.ruleInfo.loserPointsLost} PUNTI (Penalità sconfitta)
+                        <div className={`text-sm font-black mt-0.5 ${matchCalculation.isDraw ? 'text-amber-400' : 'text-rose-400'}`}>
+                          {matchCalculation.isDraw ? `+${matchCalculation.ruleInfo.winnerPointsEarned} PUNTI IN CLASSIFICA` : `-${matchCalculation.ruleInfo.loserPointsLost} PUNTI (Penalità sconfitta)`}
                         </div>
                       </div>
                     </div>
