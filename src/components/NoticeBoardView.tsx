@@ -33,8 +33,14 @@ export const NoticeBoardView: React.FC<NoticeBoardViewProps> = ({
   onSelectTournament,
   onViewHistory
 }) => {
-  const topMaschile = players.filter(p => (p.category || 'maschile') === 'maschile').slice(0, 3);
-  const topFemminile = players.filter(p => p.category === 'femminile').slice(0, 3);
+  const topMaschile = players
+    .filter(p => (p.category || 'maschile') === 'maschile')
+    .sort((a, b) => (a.rank || 999) - (b.rank || 999) || b.points - a.points)
+    .slice(0, 3);
+  const topFemminile = players
+    .filter(p => p.category === 'femminile')
+    .sort((a, b) => (a.rank || 999) - (b.rank || 999) || b.points - a.points)
+    .slice(0, 3);
   const topDoppio = players.filter(p => p.category === 'doppio').slice(0, 3);
   const recentMatches = rankingMatches.slice(0, 4);
   const activeTournaments = tournaments.filter(t => t.status !== 'completed');
