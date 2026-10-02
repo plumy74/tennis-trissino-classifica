@@ -324,11 +324,13 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
   const [rNotes, setRNotes] = useState<string>('');
   const [rDateStr, setRDateStr] = useState<string>('');
   const [rWinnerId, setRWinnerId] = useState<string>('');
+  const [rIsDrawChecked, setRIsDrawChecked] = useState<boolean>(false);
   const [rScore, setRScore] = useState<string>('');
 
   // Sincronizza vincitore e punteggio formattato della sfida
   useEffect(() => {
     if (!editingRankingMatch) return;
+    const isDrawMatch = (rMatchType === 'timed' && rTimedGamesP1 === rTimedGamesP2) || (rMatchType === 'classic' && rIsDrawChecked);
     
     if (rMatchType === 'classic') {
       let p1SetsWon = 0;
@@ -345,7 +347,9 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
         else if (rSet3P2 > rSet3P1) p2SetsWon++;
       }
 
-      if (p1SetsWon > p2SetsWon) {
+      if (isDrawMatch) {
+        setRWinnerId('draw');
+      } else if (p1SetsWon > p2SetsWon) {
         setRWinnerId(editingRankingMatch.player1Id);
       } else if (p2SetsWon > p1SetsWon) {
         setRWinnerId(editingRankingMatch.player2Id);
@@ -355,16 +359,18 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
       if (rHasSet3) {
         scoreParts.push(`${rSet3P1}-${rSet3P2}`);
       }
-      setRScore(scoreParts.join(' '));
+      setRScore(scoreParts.join(' ') + (isDrawMatch ? ' (Incomp./Par.)' : ''));
     } else {
-      if (rTimedGamesP1 > rTimedGamesP2) {
+      if (isDrawMatch) {
+        setRWinnerId('draw');
+      } else if (rTimedGamesP1 > rTimedGamesP2) {
         setRWinnerId(editingRankingMatch.player1Id);
       } else if (rTimedGamesP2 > rTimedGamesP1) {
         setRWinnerId(editingRankingMatch.player2Id);
       }
-      setRScore(`${rTimedGamesP1}-${rTimedGamesP2} (1h)`);
+      setRScore(`${rTimedGamesP1}-${rTimedGamesP2} (1h)` + (isDrawMatch ? ' (Par.)' : ''));
     }
-  }, [rMatchType, rSet1P1, rSet1P2, rSet2P1, rSet2P2, rHasSet3, rSet3P1, rSet3P2, rTimedGamesP1, rTimedGamesP2, editingRankingMatch]);
+  }, [rMatchType, rSet1P1, rSet1P2, rSet2P1, rSet2P2, rHasSet3, rSet3P1, rSet3P2, rTimedGamesP1, rTimedGamesP2, rIsDrawChecked, editingRankingMatch]);
 
   // ==========================================
   // SECTION 4: CLUB SETTINGS STATE
@@ -701,10 +707,11 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
     try {
       setIsSavingEditedMatch(true);
 
+      const isDraw = rWinnerId === 'draw';
       const wRank = rWinnerId === editingRankingMatch.player1Id ? editingRankingMatch.player1RankAtMatch : editingRankingMatch.player2RankAtMatch;
       const lRank = rWinnerId === editingRankingMatch.player1Id ? editingRankingMatch.player2RankAtMatch : editingRankingMatch.player1RankAtMatch;
       
-      const calc = calculateRankingPoints(wRank, lRank);
+      const calc = !isDraw ? calculateRankingPoints(wRank, lRank) : null;
 
       let setsList: SetScore[] = [];
       let finalScore = '';
@@ -719,10 +726,10 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
         }
         const scoreParts = [`${rSet1P1}-${rSet1P2}`, `${rSet2P1}-${rSet2P2}`];
         if (rHasSet3) scoreParts.push(`${rSet3P1}-${rSet3P2}`);
-        finalScore = scoreParts.join(' ');
+        finalScore = scoreParts.join(' ') + (isDraw ? ' (Incomp./Par.)' : '');
       } else {
         setsList = [{ p1: rTimedGamesP1, p2: rTimedGamesP2 }];
-        finalScore = `${rTimedGamesP1}-${rTimedGamesP2} (1h)`;
+        finalScore = `${rTimedGamesP1}-${rTimedGamesP2} (1h)` + (isDraw ? ' (Par.)' : '');
       }
 
       const editedMatch: RankingMatch = {
@@ -730,12 +737,12 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
         matchType: rMatchType,
         date: new Date(rDateStr).toISOString(),
         winnerId: rWinnerId,
-        loserId: rWinnerId === editingRankingMatch.player1Id ? editingRankingMatch.player2Id : editingRankingMatch.player1Id,
+        loserId: isDraw ? 'draw' : (rWinnerId === editingRankingMatch.player1Id ? editingRankingMatch.player2Id : editingRankingMatch.player1Id),
         score: finalScore,
         sets: setsList,
-        pointsAwardedWinner: calc.winnerPointsEarned,
-        pointsDeductedLoser: calc.loserPointsLost,
-        ruleApplied: calc.ruleDescription,
+        pointsAwardedWinner: isDraw ? 5 : (calc ? calc.winnerPointsEarned : 15),
+        pointsDeductedLoser: isDraw ? 0 : (calc ? calc.loserPointsLost : 5),
+        ruleApplied: isDraw ? 'Incontro terminato in Pareggio (+5 pt ciascuno)' : (calc ? calc.ruleDescription : ''),
         court: rCourt,
         notes: rNotes,
       };
@@ -2170,6 +2177,7 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                           setRDateStr(localISOTime);
                           
                           setRWinnerId(match.winnerId);
+                          setRIsDrawChecked(match.winnerId === 'draw');
                           setRScore(match.score);
                           setEditingRankingMatch(match);
                         }}
@@ -3084,15 +3092,31 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                 </div>
 
                 {/* Set 3 Toggle */}
-                <div className="pt-2 border-t border-slate-800/80">
+                <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2">
                   <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={rHasSet3}
-                      onChange={(e) => setRHasSet3(e.target.checked)}
+                      onChange={(e) => {
+                        setRHasSet3(e.target.checked);
+                        if (e.target.checked) setRIsDrawChecked(false);
+                      }}
                       className="rounded text-indigo-500 focus:ring-indigo-500 bg-slate-900 border-slate-700"
                     />
                     Incontro andato al 3° Set / Super Tie-break
+                  </label>
+
+                  <label className="flex items-center gap-2 text-xs font-medium text-amber-400 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rIsDrawChecked}
+                      onChange={(e) => {
+                        setRIsDrawChecked(e.target.checked);
+                        if (e.target.checked) setRHasSet3(false);
+                      }}
+                      className="rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700"
+                    />
+                    Incontro Incompleto / Pareggio Consensuale (+5 pt a testa)
                   </label>
                 </div>
 
