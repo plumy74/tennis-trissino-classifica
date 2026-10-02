@@ -70,6 +70,7 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
       opponentId: string;
       score: string;
       isWinner: boolean;
+      isDraw?: boolean;
       pointsDelta?: number;
       ruleApplied?: string;
       court?: string;
@@ -82,8 +83,9 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
         const isP1 = m.player1Id === currentPlayer.id;
         const opponentName = isP1 ? m.player2Name : m.player1Name;
         const opponentId = isP1 ? m.player2Id : m.player1Id;
-        const isWinner = m.winnerId === currentPlayer.id;
-        const pointsDelta = isWinner ? m.pointsAwardedWinner : -m.pointsDeductedLoser;
+        const isDraw = m.winnerId === 'draw';
+        const isWinner = !isDraw && m.winnerId === currentPlayer.id;
+        const pointsDelta = isDraw ? (m.pointsAwardedWinner || 5) : (isWinner ? m.pointsAwardedWinner : -m.pointsDeductedLoser);
 
         history.push({
           id: m.id,
@@ -94,6 +96,7 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
           opponentId,
           score: m.score,
           isWinner,
+          isDraw,
           pointsDelta,
           ruleApplied: m.ruleApplied,
           court: m.court,
@@ -193,7 +196,8 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
     const rankingMatchesForPlayer = filteredHistory.filter(m => m.type === 'ranking');
     const rankingTotal = rankingMatchesForPlayer.length;
     const rankingWins = rankingMatchesForPlayer.filter(m => m.isWinner).length;
-    const rankingLosses = rankingTotal - rankingWins;
+    const rankingDraws = rankingMatchesForPlayer.filter(m => (m as any).isDraw).length;
+    const rankingLosses = rankingTotal - rankingWins - rankingDraws;
     const rankingWinRate = rankingTotal > 0 ? Math.round((rankingWins / rankingTotal) * 100) : 0;
 
     const tournamentMatchesForPlayer = filteredHistory.filter(m => m.type === 'tournament');
@@ -280,7 +284,8 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
     const totalMatches = filteredHistory.length;
     const wins = filteredHistory.filter(m => m.isWinner).length;
-    const losses = totalMatches - wins;
+    const draws = filteredHistory.filter(m => (m as any).isDraw).length;
+    const losses = totalMatches - wins - draws;
     const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
 
     return {
@@ -903,17 +908,19 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
               <div key={`hist_${m.id}_${idx}`} className="p-4 hover:bg-slate-50/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${
-                    m.isWinner 
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                      : 'bg-rose-50 text-rose-700 border border-rose-200'
+                    (m as any).isDraw 
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : m.isWinner 
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                        : 'bg-rose-50 text-rose-700 border border-rose-200'
                   }`}>
-                    {m.isWinner ? 'V' : 'P'}
+                    {(m as any).isDraw ? 'N' : (m.isWinner ? 'V' : 'P')}
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900 text-sm">
-                        {m.isWinner ? 'Vittoria contro' : 'Sconfitta contro'} {m.opponentName}
+                        {(m as any).isDraw ? 'Pareggio contro' : (m.isWinner ? 'Vittoria contro' : 'Sconfitta contro')} {m.opponentName}
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-mono font-bold">
                         {m.score}
@@ -944,7 +951,7 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                 {m.pointsDelta !== undefined && (
                   <div className="text-right shrink-0">
                     <span className={`font-display font-extrabold text-base ${
-                      m.pointsDelta > 0 ? 'text-orange-600' : 'text-rose-600'
+                      (m as any).isDraw ? 'text-amber-600' : (m.pointsDelta > 0 ? 'text-orange-600' : 'text-rose-600')
                     }`}>
                       {m.pointsDelta > 0 ? `+${m.pointsDelta}` : m.pointsDelta} pt
                     </span>
