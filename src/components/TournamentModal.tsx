@@ -234,8 +234,6 @@ export const TournamentModal: React.FC<TournamentModalProps> = ({
                 <option value="Singolare Maschile">Singolare Maschile</option>
                 <option value="Singolare Femminile">Singolare Femminile</option>
                 <option value="Singolare Open">Singolare Open</option>
-                <option value="Doppio Maschile">Doppio Maschile</option>
-                <option value="Doppio Misto">Doppio Misto</option>
               </select>
             </div>
 

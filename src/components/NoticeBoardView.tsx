@@ -178,47 +178,7 @@ export const NoticeBoardView: React.FC<NoticeBoardViewProps> = ({
               )}
             </div>
 
-            {/* 3. Classifica Doppio */}
-            <div className="bg-indigo-50/30 border border-indigo-100 rounded-xl p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-black uppercase text-indigo-600 tracking-wider">
-                  👥 Classifica Doppio
-                </span>
-                <span className="text-[11px] text-slate-500">
-                  {topDoppio.length} coppie a podio
-                </span>
-              </div>
-              {topDoppio.length === 0 ? (
-                <p className="text-xs text-slate-500 py-1 italic">Nessuna coppia registrata</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {topDoppio.map((p, idx) => (
-                    <div 
-                      key={`top_d_${p.id}_${idx}`}
-                      onClick={() => onSelectPlayer(p.id)}
-                      className="flex items-center justify-between text-xs py-1 px-2 rounded hover:bg-indigo-100/50 cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={`w-5 h-5 rounded flex items-center justify-center font-black text-[10px] ${
-                          p.rank === 1 ? 'bg-amber-500 text-slate-950' : p.rank === 2 ? 'bg-slate-700 text-white' : 'bg-amber-800 text-amber-200'
-                        }`}>
-                          {p.rank}°
-                        </span>
-                        <span className="font-bold text-slate-800">
-                          {p.name} {p.partnerName ? `/ ${p.partnerName}` : ''}
-                        </span>
-                        {calculateAge(p.birthDate) !== null && (
-                          <span className="text-[10px] text-indigo-700 font-bold bg-indigo-100 px-1.5 py-0.5 rounded">
-                            {calculateAge(p.birthDate)}a
-                          </span>
-                        )}
-                      </div>
-                      <span className="font-black text-indigo-600">{p.points} pt</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Sospensione temporanea del doppio su richiesta */}
           </div>
         </div>
 

@@ -198,26 +198,7 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
           </span>
         </button>
 
-        <button
-          onClick={() => {
-            setActiveCategory('doppio');
-            setSearchTerm('');
-            setShowFullLadder(false);
-            setHistoryCategoryFilter('doppio');
-          }}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all cursor-pointer ${
-            activeCategory === 'doppio'
-              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/10 scale-[1.01]'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-          }`}
-        >
-          <span>👥 Classifica Doppio</span>
-          <span className={`px-2 py-0.5 rounded-full text-xs font-black ${
-            activeCategory === 'doppio' ? 'bg-orange-800 text-white' : 'bg-slate-100 text-slate-500'
-          }`}>
-            {doppioCount}
-          </span>
-        </button>
+        {/* Sospensione temporanea del doppio su richiesta: solo Singolare Maschile e Singolare Femminile */}
       </div>
 
       {/* 2. Subito sotto i selettori di categoria: Switcher tra Classifica Ufficiale e Storico Partite */}
@@ -288,7 +269,6 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
               <option value="all">Tutte le categorie</option>
               <option value="maschile">Singolare Maschile</option>
               <option value="femminile">Singolare Femminile</option>
-              <option value="doppio">Classifica Doppio</option>
             </select>
             <div className="relative">
               <select

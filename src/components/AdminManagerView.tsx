@@ -875,7 +875,7 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
         </div>
 
         {/* Quick Statistics Bar */}
-        <div className="mt-6 pt-5 border-t border-slate-200 grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="mt-6 pt-5 border-t border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-white border border-slate-200 rounded-2xl p-3 text-center shadow-sm shadow-slate-100/50">
             <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">🎾 Maschile</span>
             <span className="text-2xl font-black text-slate-900">{maschileCount}</span>
@@ -889,18 +889,12 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
           </div>
 
           <div className="bg-white border border-slate-200 rounded-2xl p-3 text-center shadow-sm shadow-slate-100/50">
-            <span className="text-[11px] font-bold text-orange-600 uppercase tracking-wider block">👥 Doppio</span>
-            <span className="text-2xl font-black text-slate-900">{doppioCount}</span>
-            <span className="text-[11px] text-slate-500 block">coppie</span>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-2xl p-3 text-center shadow-sm shadow-slate-100/50">
             <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">⚔️ Sfide Registrate</span>
             <span className="text-2xl font-black text-slate-900">{rankingMatches.length}</span>
             <span className="text-[11px] text-slate-500 block">partite</span>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-3 text-center shadow-sm shadow-slate-100/50 col-span-2 sm:col-span-1">
+          <div className="bg-white border border-slate-200 rounded-2xl p-3 text-center shadow-sm shadow-slate-100/50">
             <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">🏆 Tornei Sociali</span>
             <span className="text-2xl font-black text-slate-900">{tournaments.length}</span>
             <span className="text-[11px] text-slate-500 block">creati</span>
@@ -1025,7 +1019,7 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                       <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-2">
                         Categoria di Classifica *
                       </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
                           type="button"
                           onClick={() => {
@@ -1054,18 +1048,6 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                           }`}
                         >
                           <span>🎾 Singolare Femminile</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setNewCategory('doppio')}
-                          className={`py-3 px-4 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                            newCategory === 'doppio'
-                              ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300 shadow-md shadow-indigo-500/10'
-                              : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          <span>👥 Classifica Doppio</span>
                         </button>
                       </div>
                     </div>
@@ -1378,14 +1360,6 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                 >
                   Femminile ({femminileCount})
                 </button>
-                <button
-                  onClick={() => setPlayerCategoryFilter('doppio')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                    playerCategoryFilter === 'doppio' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Doppio ({doppioCount})
-                </button>
               </div>
             </div>
 
@@ -1579,7 +1553,7 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
               <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
                 1. Seleziona Categoria della Sfida *
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setMatchCategory('maschile')}
@@ -1602,18 +1576,6 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                   }`}
                 >
                   <span>🎾 Singolare Femminile ({femminileCount})</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setMatchCategory('doppio')}
-                  className={`py-3 px-4 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                    matchCategory === 'doppio'
-                      ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300 shadow-md shadow-indigo-500/10'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <span>👥 Classifica Doppio ({doppioCount})</span>
                 </button>
               </div>
             </div>
@@ -2028,14 +1990,6 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
                   }`}
                 >
                   Femminile ({matchFemminileCount})
-                </button>
-                <button
-                  onClick={() => setMatchListCategoryFilter('doppio')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                    matchListCategoryFilter === 'doppio' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Doppio ({matchDoppioCount})
                 </button>
               </div>
             </div>

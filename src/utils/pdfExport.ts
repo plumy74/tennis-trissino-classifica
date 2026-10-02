@@ -2,16 +2,48 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Tournament, TournamentMatch, RoundRobinStanding, RankingMatch, Player, PlayerCategory } from '../types/tennis';
 
-function applyAutoTable(doc: any, options: any) {
-  if (typeof autoTable === 'function') {
-    autoTable(doc, options);
-  } else if (typeof (autoTable as any)?.default === 'function') {
-    (autoTable as any).default(doc, options);
-  } else if (typeof doc.autoTable === 'function') {
-    doc.autoTable(options);
-  } else {
-    console.error('autoTable plugin not found on jsPDF instance');
+function downloadPdfDocument(doc: jsPDF, filename: string) {
+  try {
+    doc.save(filename);
+  } catch (err) {
+    console.warn('doc.save standard error, using blob fallback:', err);
+    try {
+      const blob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
+        URL.revokeObjectURL(blobUrl);
+      }, 2000);
+    } catch (e) {
+      console.error('Blob fallback also failed:', e);
+    }
   }
+}
+
+function applyAutoTable(doc: any, options: any) {
+  try {
+    if (typeof autoTable === 'function') {
+      autoTable(doc, options);
+      return true;
+    } else if (typeof (autoTable as any)?.default === 'function') {
+      (autoTable as any).default(doc, options);
+      return true;
+    } else if (typeof doc.autoTable === 'function') {
+      doc.autoTable(options);
+      return true;
+    }
+  } catch (e) {
+    console.warn('autoTable invocation error:', e);
+  }
+  return false;
 }
 
 /**
@@ -556,7 +588,7 @@ export function exportLadderToPDF(
       doc.text(`${clubName} • Pagina ${i} di ${pageCount}`, 14, doc.internal.pageSize.height - 10);
     }
 
-    doc.save(`classifica_${category}_${selectedYear}.pdf`);
+    downloadPdfDocument(doc, `classifica_${category}_${selectedYear}.pdf`);
   } catch (error) {
     console.error('Errore generazione PDF classifica:', error);
     alert('Errore durante la generazione del PDF della classifica.');
@@ -635,7 +667,7 @@ export function exportMatchHistoryToPDF(
     const filename = monthFilter !== 'all' && monthNames[monthFilter]
       ? `storico_partite_${monthNames[monthFilter].toLowerCase()}.pdf`
       : "storico_partite_trissino.pdf";
-    doc.save(filename);
+    downloadPdfDocument(doc, filename);
   } catch (error) {
     console.error('Errore generazione PDF storico:', error);
     alert('Errore durante la generazione del PDF dello storico partite.');

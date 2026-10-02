@@ -302,7 +302,7 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
               Categoria della Sfida
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setSelectedCategory('maschile')}
@@ -324,17 +324,6 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
                 }`}
               >
                 Singolare Femminile
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedCategory('doppio')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
-                  selectedCategory === 'doppio'
-                    ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500'
-                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
-                }`}
-              >
-                Doppio
               </button>
             </div>
           </div>

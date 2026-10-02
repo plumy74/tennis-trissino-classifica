@@ -393,7 +393,7 @@ export const ClubSettingsModal: React.FC<ClubSettingsModalProps> = ({
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                 Categoria Classifica
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -406,7 +406,7 @@ export const ClubSettingsModal: React.FC<ClubSettingsModalProps> = ({
                       : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800'
                   }`}
                 >
-                  Singolare M
+                  Singolare Maschile (M)
                 </button>
                 <button
                   type="button"
@@ -420,18 +420,7 @@ export const ClubSettingsModal: React.FC<ClubSettingsModalProps> = ({
                       : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800'
                   }`}
                 >
-                  Singolare F
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPlayerCategory('doppio')}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all border ${
-                    playerCategory === 'doppio'
-                      ? 'bg-orange-50 text-orange-700 border-orange-400 font-black shadow-sm'
-                      : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800'
-                  }`}
-                >
-                  Doppio
+                  Singolare Femminile (F)
                 </button>
               </div>
             </div>
