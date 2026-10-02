@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { exportLadderToPDF, exportMatchHistoryToPDF } from '../utils/pdfExport';
 import { 
   Trophy, 
   ArrowUp, 
@@ -146,123 +145,11 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
   };
 
   const handleExportPDF = () => {
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(234, 88, 12); // Orange theme color
-    doc.text("TENNIS COMUNALI TRISSINO", 14, 20);
-
-    doc.setFontSize(12);
-    doc.setTextColor(51, 65, 85);
-    doc.text(`Classifica Ufficiale - Categoria: ${activeCategory.toUpperCase()} ${selectedYear !== 'all' ? `(Stagione ${selectedYear})` : ''}`, 14, 28);
-
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Data emissione: ${new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })}`, 14, 34);
-
-    // Table Data
-    const tableHeaders = ["Pos.", activeCategory === 'doppio' ? "Coppia di Doppio" : "Giocatore", "Class. FITP", "Punti", "Giocate", "V - P", "Win %"];
-    const tableRows = filteredPlayers.map((player, idx) => {
-      const winRate = player.matchesPlayed > 0 
-        ? Math.round((player.matchesWon / player.matchesPlayed) * 100) 
-        : 0;
-      const name = player.partnerName ? `${player.name} / ${player.partnerName}` : player.name;
-      return [
-        `${idx + 1}°`,
-        name,
-        player.fitRating || 'NC',
-        `${player.points} pt`,
-        player.matchesPlayed,
-        `${player.matchesWon} - ${player.matchesLost}`,
-        `${winRate}%`
-      ];
-    });
-
-    autoTable(doc, {
-      head: [tableHeaders],
-      body: tableRows,
-      startY: 40,
-      theme: 'grid',
-      headStyles: {
-        fillColor: [249, 115, 22],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        fontSize: 10,
-        halign: 'center'
-      },
-      bodyStyles: {
-        fontSize: 9,
-        textColor: [30, 41, 59],
-        halign: 'center'
-      },
-      columnStyles: {
-        0: { cellWidth: 15, halign: 'center' },
-        1: { cellWidth: 'auto', halign: 'left' },
-        2: { cellWidth: 25, halign: 'center' },
-        3: { cellWidth: 20, halign: 'right', fontStyle: 'bold' },
-        4: { cellWidth: 20, halign: 'center' },
-        5: { cellWidth: 20, halign: 'center' },
-        6: { cellWidth: 20, halign: 'center' }
-      },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252]
-      }
-    });
-
-    // Footer
-    const pageCount = (doc as any).internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(`Tennis Trissino • Pagina ${i} di ${pageCount}`, 14, doc.internal.pageSize.height - 10);
-    }
-
-    doc.save(`classifica_${activeCategory}_${selectedYear}.pdf`);
+    exportLadderToPDF(filteredPlayers, activeCategory, selectedYear);
   };
 
   const handleExportHistory = () => {
-    const doc = new jsPDF();
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.setTextColor(234, 88, 12);
-    
-    const monthNames: Record<string, string> = {
-      '01': 'Gennaio', '02': 'Febbraio', '03': 'Marzo', '04': 'Aprile',
-      '05': 'Maggio', '06': 'Giugno', '07': 'Luglio', '08': 'Agosto',
-      '09': 'Settembre', '10': 'Ottobre', '11': 'Novembre', '12': 'Dicembre'
-    };
-    const titleText = historyMonthFilter !== 'all' && monthNames[historyMonthFilter]
-      ? `TENNIS COMUNALI TRISSINO - STORICO PARTITE (${monthNames[historyMonthFilter].toUpperCase()})`
-      : "TENNIS COMUNALI TRISSINO - STORICO PARTITE";
-    doc.text(titleText, 14, 20);
-
-    const headers = ["Data", "Categoria", "Giocatore 1", "Punteggio", "Giocatore 2", "Vincitore", "Tipo"];
-    const rows = filteredHistoryMatches.map(m => [
-      m.date.slice(0, 10),
-      m.category.toUpperCase(),
-      m.player1Name,
-      m.score,
-      m.player2Name,
-      m.winnerId === m.player1Id ? m.player1Name : m.player2Name,
-      m.matchType === 'timed' ? 'A tempo' : 'Classica'
-    ]);
-
-    autoTable(doc, {
-      head: [headers],
-      body: rows,
-      startY: 28,
-      theme: 'grid',
-      headStyles: { fillColor: [249, 115, 22] },
-      bodyStyles: { fontSize: 8 }
-    });
-
-    const filename = historyMonthFilter !== 'all' && monthNames[historyMonthFilter]
-      ? `storico_partite_${monthNames[historyMonthFilter].toLowerCase()}.pdf`
-      : "storico_partite_trissino.pdf";
-    doc.save(filename);
+    exportMatchHistoryToPDF(filteredHistoryMatches, historyMonthFilter);
   };
 
   return (

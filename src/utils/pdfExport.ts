@@ -1,6 +1,18 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Tournament, TournamentMatch, RoundRobinStanding, RankingMatch } from '../types/tennis';
+import { Tournament, TournamentMatch, RoundRobinStanding, RankingMatch, Player, PlayerCategory } from '../types/tennis';
+
+function applyAutoTable(doc: any, options: any) {
+  if (typeof autoTable === 'function') {
+    autoTable(doc, options);
+  } else if (typeof (autoTable as any)?.default === 'function') {
+    (autoTable as any).default(doc, options);
+  } else if (typeof doc.autoTable === 'function') {
+    doc.autoTable(options);
+  } else {
+    console.error('autoTable plugin not found on jsPDF instance');
+  }
+}
 
 /**
  * Esporta il tabellone grafico ufficiale con linee di dipendenza gerarchica (stile FITP / albero)
@@ -448,65 +460,184 @@ export function shareTournamentViaEmail(
 }
 
 /**
+ * Esporta la classifica ufficiale del circolo in PDF
+ */
+export function exportLadderToPDF(
+  players: Player[],
+  category: PlayerCategory,
+  selectedYear: string = '2026',
+  clubName: string = 'Tennis Comunali Trissino'
+) {
+  try {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(234, 88, 12); // Orange theme color
+    doc.text(clubName.toUpperCase(), 14, 20);
+
+    const categoryLabels: Record<PlayerCategory, string> = {
+      maschile: 'Singolare Maschile',
+      femminile: 'Singolare Femminile',
+      doppio: 'Doppio'
+    };
+
+    doc.setFontSize(12);
+    doc.setTextColor(51, 65, 85);
+    const catLabel = categoryLabels[category] || String(category).toUpperCase();
+    doc.text(`Classifica Ufficiale - ${catLabel} ${selectedYear !== 'all' ? `(Stagione ${selectedYear})` : ''}`, 14, 28);
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Data emissione: ${new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })}  •  Totale atleti: ${players.length}`, 14, 34);
+
+    // Table Data
+    const tableHeaders = ["Pos.", category === 'doppio' ? "Coppia di Doppio" : "Giocatore", "Class. FITP", "Punti", "Giocate", "V - P", "Win %"];
+    const tableRows = players.map((player, idx) => {
+      const winRate = player.matchesPlayed > 0 
+        ? Math.round((player.matchesWon / player.matchesPlayed) * 100) 
+        : 0;
+      const name = player.partnerName ? `${player.name} / ${player.partnerName}` : player.name;
+      return [
+        `${idx + 1}°`,
+        name,
+        player.fitRating || 'NC',
+        `${player.points} pt`,
+        player.matchesPlayed,
+        `${player.matchesWon} - ${player.matchesLost}`,
+        `${winRate}%`
+      ];
+    });
+
+    applyAutoTable(doc, {
+      head: [tableHeaders],
+      body: tableRows,
+      startY: 40,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [249, 115, 22],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10,
+        halign: 'center'
+      },
+      bodyStyles: {
+        fontSize: 9,
+        textColor: [30, 41, 59],
+        halign: 'center'
+      },
+      columnStyles: {
+        0: { cellWidth: 15, halign: 'center' },
+        1: { cellWidth: 'auto', halign: 'left' },
+        2: { cellWidth: 25, halign: 'center' },
+        3: { cellWidth: 20, halign: 'right', fontStyle: 'bold' },
+        4: { cellWidth: 20, halign: 'center' },
+        5: { cellWidth: 20, halign: 'center' },
+        6: { cellWidth: 20, halign: 'center' }
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      }
+    });
+
+    // Footer
+    const pageCount = typeof doc.getNumberOfPages === 'function' 
+      ? doc.getNumberOfPages() 
+      : (doc as any).internal?.getNumberOfPages?.() || 1;
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`${clubName} • Pagina ${i} di ${pageCount}`, 14, doc.internal.pageSize.height - 10);
+    }
+
+    doc.save(`classifica_${category}_${selectedYear}.pdf`);
+  } catch (error) {
+    console.error('Errore generazione PDF classifica:', error);
+    alert('Errore durante la generazione del PDF della classifica.');
+  }
+}
+
+/**
  * Esporta lo storico dei risultati in PDF
  */
 export function exportMatchHistoryToPDF(
   matches: RankingMatch[],
-  categoryLabel: string = 'Generale',
+  monthFilter: string = 'all',
   clubName: string = 'Tennis Comunali Trissino'
 ) {
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
-
-  doc.setTextColor(15, 23, 42);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text(`${clubName.toUpperCase()} — STORICO PARTITE (${categoryLabel.toUpperCase()})`, 14, 15);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.text(`Totale incontri registrati: ${matches.length}  •  Generato il ${new Date().toLocaleDateString('it-IT')}`, 14, 21);
-
-  const tableData = matches.map((m, idx) => {
-    const dateFormatted = new Date(m.date).toLocaleDateString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+  try {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
     });
-    const typeLabel = m.matchType === 'timed' ? 'A Tempo (1h)' : 'Classica';
-    return [
-      idx + 1,
-      dateFormatted,
-      m.category.toUpperCase(),
-      m.player1Name,
-      m.player2Name,
-      m.score,
-      typeLabel,
-      `+${m.pointsAwardedWinner} pt`
-    ];
-  });
 
-  autoTable(doc, {
-    startY: 26,
-    head: [['#', 'Data', 'Cat.', 'Giocatore 1', 'Giocatore 2', 'Punteggio', 'Formato', 'Punti']],
-    body: tableData,
-    headStyles: { fillColor: [249, 115, 22] }, // orange-500
-    styles: { fontSize: 8, cellPadding: 2.5 },
-    columnStyles: {
-      0: { cellWidth: 10 },
-      1: { cellWidth: 22 },
-      2: { cellWidth: 20 },
-      3: { cellWidth: 42 },
-      4: { cellWidth: 42 },
-      5: { cellWidth: 24 },
-      6: { cellWidth: 22 },
-      7: { cellWidth: 16 }
-    }
-  });
+    const monthNames: Record<string, string> = {
+      '01': 'Gennaio', '02': 'Febbraio', '03': 'Marzo', '04': 'Aprile',
+      '05': 'Maggio', '06': 'Giugno', '07': 'Luglio', '08': 'Agosto',
+      '09': 'Settembre', '10': 'Ottobre', '11': 'Novembre', '12': 'Dicembre'
+    };
 
-  doc.save(`Storico_Partite_${categoryLabel.replace(/\s+/g, '_')}.pdf`);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    const titleText = monthFilter !== 'all' && monthNames[monthFilter]
+      ? `${clubName.toUpperCase()} — STORICO PARTITE (${monthNames[monthFilter].toUpperCase()})`
+      : `${clubName.toUpperCase()} — STORICO PARTITE`;
+    doc.text(titleText, 14, 15);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Totale incontri registrati: ${matches.length}  •  Generato il ${new Date().toLocaleDateString('it-IT')}`, 14, 21);
+
+    const tableData = matches.map((m, idx) => {
+      const dateFormatted = m.date 
+        ? new Date(m.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        : '';
+      const typeLabel = m.matchType === 'timed' ? 'A Tempo (1h)' : 'Classica';
+      return [
+        idx + 1,
+        dateFormatted,
+        (m.category || '').toUpperCase(),
+        m.player1Name,
+        m.player2Name,
+        m.score,
+        typeLabel,
+        `+${m.pointsAwardedWinner} pt`
+      ];
+    });
+
+    applyAutoTable(doc, {
+      startY: 26,
+      head: [['#', 'Data', 'Cat.', 'Giocatore 1', 'Giocatore 2', 'Punteggio', 'Formato', 'Punti']],
+      body: tableData,
+      headStyles: { fillColor: [249, 115, 22] }, // orange-500
+      styles: { fontSize: 8, cellPadding: 2.5 },
+      columnStyles: {
+        0: { cellWidth: 10 },
+        1: { cellWidth: 22 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 42 },
+        4: { cellWidth: 42 },
+        5: { cellWidth: 24 },
+        6: { cellWidth: 22 },
+        7: { cellWidth: 16 }
+      }
+    });
+
+    const filename = monthFilter !== 'all' && monthNames[monthFilter]
+      ? `storico_partite_${monthNames[monthFilter].toLowerCase()}.pdf`
+      : "storico_partite_trissino.pdf";
+    doc.save(filename);
+  } catch (error) {
+    console.error('Errore generazione PDF storico:', error);
+    alert('Errore durante la generazione del PDF dello storico partite.');
+  }
 }
