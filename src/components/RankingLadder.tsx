@@ -551,6 +551,23 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                     </div>
                   </div>
 
+                  {/* Caso 4 */}
+                  <div className="bg-amber-50/40 border border-amber-100 rounded-2xl p-4 space-y-2 animate-fadeIn">
+                    <h4 className="font-display font-extrabold text-amber-800 text-sm uppercase tracking-wider flex items-center gap-1.5">
+                      🤝 Caso 4: Pareggio o Incontro Incompleto / Interrotto
+                    </h4>
+                    <p className="text-xs text-slate-600 font-medium">
+                      In caso di pareggio di giochi (es. 10-10 o 12-12) in un incontro a tempo, oppure in caso di accordo per match interrotto o incompleto (es. ore scadute sul 6-2 5-6):
+                    </p>
+                    <div className="flex justify-between items-center text-xs text-slate-700 pt-1">
+                      <span>🎾 <strong>Punteggio di Pareggio Simmetrico</strong> (entrambi gli atleti)</span>
+                      <span className="font-black text-amber-600">+5 pt / +5 pt</span>
+                    </div>
+                    <p className="text-[11px] text-amber-700 font-semibold italic">
+                      💡 Nota: Entrambi i giocatori incrementano la presenza disputata (+1 match) e ricevono +5 punti classifica come premio partecipazione, senza registrare né vittorie né sconfitte.
+                    </p>
+                  </div>
+
                 </div>
               </div>
 
