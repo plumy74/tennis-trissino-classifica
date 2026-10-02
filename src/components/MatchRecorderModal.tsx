@@ -48,6 +48,7 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
   const [set2P1, setSet2P1] = useState<number>(6);
   const [set2P2, setSet2P2] = useState<number>(3);
   const [hasSet3, setHasSet3] = useState<boolean>(false);
+  const [isDrawChecked, setIsDrawChecked] = useState<boolean>(false);
   const [set3P1, setSet3P1] = useState<number>(10);
   const [set3P2, setSet3P2] = useState<number>(8);
   const [timedGamesP1, setTimedGamesP1] = useState<number>(12);
@@ -70,6 +71,7 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
       setSet2P1(6);
       setSet2P2(3);
       setHasSet3(false);
+      setIsDrawChecked(false);
       setSet3P1(10);
       setSet3P2(8);
       setNotes('');
@@ -84,8 +86,9 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
   const p2 = players.find(p => p.id === player2Id);
 
   // Calcola vincitore in base al tipo di match
-  const { winnerId, loserId, formattedScore, setsList } = useMemo(() => {
+  const { winnerId, loserId, formattedScore, setsList, isDraw } = useMemo(() => {
     const sets: SetScore[] = [];
+    const isDrawMatch = (matchType === 'timed' && timedGamesP1 === timedGamesP2) || (matchType === 'classic' && isDrawChecked);
 
     if (matchType === 'classic') {
       let p1SetsWon = 0;
@@ -111,7 +114,10 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
       let wId: string | null = null;
       let lId: string | null = null;
 
-      if (p1SetsWon > p2SetsWon) {
+      if (isDrawMatch) {
+        wId = 'draw';
+        lId = 'draw';
+      } else if (p1SetsWon > p2SetsWon) {
         wId = player1Id;
         lId = player2Id;
       } else if (p2SetsWon > p1SetsWon) {
@@ -125,8 +131,9 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
       return {
         winnerId: wId,
         loserId: lId,
-        formattedScore: scoreParts.join(' '),
-        setsList: sets
+        formattedScore: scoreParts.join(' ') + (isDrawMatch ? ' (Incomp./Par.)' : ''),
+        setsList: sets,
+        isDraw: isDrawMatch
       };
     } else {
       // Chi vince più giochi in un'ora
@@ -135,7 +142,10 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
       let wId: string | null = null;
       let lId: string | null = null;
 
-      if (timedGamesP1 > timedGamesP2) {
+      if (isDrawMatch) {
+        wId = 'draw';
+        lId = 'draw';
+      } else if (timedGamesP1 > timedGamesP2) {
         wId = player1Id;
         lId = player2Id;
       } else if (timedGamesP2 > timedGamesP1) {
@@ -146,15 +156,32 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
       return {
         winnerId: wId,
         loserId: lId,
-        formattedScore: `${timedGamesP1}-${timedGamesP2} (1h)`,
-        setsList: sets
+        formattedScore: `${timedGamesP1}-${timedGamesP2} (1h)` + (isDrawMatch ? ' (Par.)' : ''),
+        setsList: sets,
+        isDraw: isDrawMatch
       };
     }
-  }, [matchType, player1Id, player2Id, set1P1, set1P2, set2P1, set2P2, hasSet3, set3P1, set3P2, timedGamesP1, timedGamesP2]);
+  }, [matchType, player1Id, player2Id, set1P1, set1P2, set2P1, set2P2, hasSet3, set3P1, set3P2, timedGamesP1, timedGamesP2, isDrawChecked]);
 
   // Calcolo punti in anteprima con la formula esatta
   const scoringPreview = useMemo(() => {
-    if (!winnerId || !loserId || !p1 || !p2) return null;
+    if (!p1 || !p2) return null;
+
+    if (isDraw) {
+      return {
+        winner: p1,
+        loser: p2,
+        winnerPointsEarned: 5,
+        loserPointsLost: 0,
+        ruleDescription: 'Incontro terminato in Pareggio / Incompleto (+5 pt ciascuno)',
+        rankDiff: 0,
+        isHigherRank: false,
+        isSameRank: true,
+        isLowerRank: false
+      };
+    }
+
+    if (!winnerId || !loserId) return null;
 
     const winner = winnerId === p1.id ? p1 : p2;
     const loser = loserId === p1.id ? p1 : p2;
@@ -165,7 +192,7 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
       loser,
       ...calc
     };
-  }, [winnerId, loserId, p1, p2]);
+  }, [winnerId, loserId, p1, p2, isDraw]);
 
   if (!isOpen) return null;
 
@@ -207,7 +234,24 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
 
       // Aggiorna statistiche e punti dei due giocatori
       const updatedPlayersList = players.map(player => {
-        if (player.id === winnerId) {
+        if (isDraw && (player.id === p1.id || player.id === p2.id)) {
+          const isP1 = player.id === p1.id;
+          const setsWonInMatch = setsList.filter(s => (isP1 ? s.p1 > s.p2 : s.p2 > s.p1)).length;
+          const setsLostInMatch = setsList.filter(s => (isP1 ? s.p2 > s.p1 : s.p1 > s.p2)).length;
+          const gamesWonInMatch = setsList.reduce((acc, s) => acc + (isP1 ? s.p1 : s.p2), 0);
+          const gamesLostInMatch = setsList.reduce((acc, s) => acc + (isP1 ? s.p2 : s.p1), 0);
+
+          return {
+            ...player,
+            points: player.points + 5,
+            matchesPlayed: player.matchesPlayed + 1,
+            setsWon: player.setsWon + setsWonInMatch,
+            setsLost: player.setsLost + setsLostInMatch,
+            gamesWon: player.gamesWon + gamesWonInMatch,
+            gamesLost: player.gamesLost + gamesLostInMatch,
+            currentStreak: 0
+          };
+        } else if (!isDraw && player.id === winnerId) {
           const setsWonInMatch = setsList.filter(s => (winnerId === p1.id ? s.p1 > s.p2 : s.p2 > s.p1)).length;
           const setsLostInMatch = setsList.filter(s => (winnerId === p1.id ? s.p2 > s.p1 : s.p1 > s.p2)).length;
           const gamesWonInMatch = setsList.reduce((acc, s) => acc + (winnerId === p1.id ? s.p1 : s.p2), 0);
@@ -225,7 +269,7 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
             currentStreak: player.currentStreak > 0 ? player.currentStreak + 1 : 1,
             bestStreak: Math.max(player.bestStreak, (player.currentStreak > 0 ? player.currentStreak + 1 : 1))
           };
-        } else if (player.id === loserId) {
+        } else if (!isDraw && player.id === loserId) {
           const setsWonInMatch = setsList.filter(s => (loserId === p1.id ? s.p1 > s.p2 : s.p2 > s.p1)).length;
           const setsLostInMatch = setsList.filter(s => (loserId === p1.id ? s.p2 > s.p1 : s.p1 > s.p2)).length;
           const gamesWonInMatch = setsList.reduce((acc, s) => acc + (loserId === p1.id ? s.p1 : s.p2), 0);
@@ -539,15 +583,31 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
             </div>
 
             {/* Set 3 Toggle */}
-            <div className="pt-2 border-t border-slate-800/80">
+            <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2">
               <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hasSet3}
-                  onChange={(e) => setHasSet3(e.target.checked)}
+                  onChange={(e) => {
+                    setHasSet3(e.target.checked);
+                    if (e.target.checked) setIsDrawChecked(false);
+                  }}
                   className="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700"
                 />
                 Incontro andato al 3° Set / Super Tie-break
+              </label>
+
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer text-amber-400">
+                <input
+                  type="checkbox"
+                  checked={isDrawChecked}
+                  onChange={(e) => {
+                    setIsDrawChecked(e.target.checked);
+                    if (e.target.checked) setHasSet3(false);
+                  }}
+                  className="rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700"
+                />
+                Incontro Incompleto / Pareggio Consensuale (+5 pt a testa)
               </label>
             </div>
 
@@ -581,42 +641,42 @@ export const MatchRecorderModal: React.FC<MatchRecorderModalProps> = ({
 
           {/* Anteprima Calcolo Regolamentare dei Punti */}
           {scoringPreview && (
-            <div className="bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-900 border border-emerald-500/40 rounded-xl p-4 shadow-lg space-y-2.5">
+            <div className={`bg-gradient-to-br ${isDraw ? 'from-amber-950/40 border-amber-500/40 text-amber-300' : 'from-emerald-950/40 border-emerald-500/40 text-emerald-300'} via-slate-900 to-slate-900 border rounded-xl p-4 shadow-lg space-y-2.5`}>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span className={`text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 ${isDraw ? 'text-amber-400' : 'text-emerald-400'}`}>
                   <Award className="w-4 h-4" />
-                  Calcolo Punti Ufficiale
+                  {isDraw ? 'Calcolo Punti Pareggio (Ipotesi 3)' : 'Calcolo Punti Ufficiale'}
                 </span>
-                <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded border ${isDraw ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'}`}>
                   Risultato: {formattedScore}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
-                {/* Vincitore */}
-                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-emerald-500/30">
-                  <span className="text-slate-400 block mb-0.5">Vincitore ({scoringPreview.winner.name})</span>
-                  <div className="text-emerald-400 font-extrabold text-lg">
+                {/* Giocatore 1 / Vincitore */}
+                <div className={`bg-slate-950/80 p-2.5 rounded-lg border ${isDraw ? 'border-amber-500/30' : 'border-emerald-500/30'}`}>
+                  <span className="text-slate-400 block mb-0.5">{isDraw ? `Giocatore 1 (${p1?.name})` : `Vincitore (${scoringPreview.winner.name})`}</span>
+                  <div className={`${isDraw ? 'text-amber-400' : 'text-emerald-400'} font-extrabold text-lg`}>
                     +{scoringPreview.winnerPointsEarned} PUNTI
                   </div>
                   <span className="text-[11px] text-slate-300 block mt-0.5">
-                    Nuovo tot: {scoringPreview.winner.points + scoringPreview.winnerPointsEarned} pt
+                    Nuovo tot: {(isDraw ? (p1?.points || 0) : scoringPreview.winner.points) + scoringPreview.winnerPointsEarned} pt
                   </span>
                 </div>
 
-                {/* Sconfitto */}
-                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-rose-500/30">
-                  <span className="text-slate-400 block mb-0.5">Sconfitto ({scoringPreview.loser.name})</span>
-                  <div className="text-rose-400 font-extrabold text-lg">
-                    -{scoringPreview.loserPointsLost} PUNTI
+                {/* Giocatore 2 / Sconfitto */}
+                <div className={`bg-slate-950/80 p-2.5 rounded-lg border ${isDraw ? 'border-amber-500/30' : 'border-rose-500/30'}`}>
+                  <span className="text-slate-400 block mb-0.5">{isDraw ? `Giocatore 2 (${p2?.name})` : `Sconfitto (${scoringPreview.loser.name})`}</span>
+                  <div className={`${isDraw ? 'text-amber-400' : 'text-rose-400'} font-extrabold text-lg`}>
+                    {isDraw ? `+${scoringPreview.winnerPointsEarned}` : `-${scoringPreview.loserPointsLost}`} PUNTI
                   </div>
                   <span className="text-[11px] text-slate-300 block mt-0.5">
-                    Nuovo tot: {Math.max(0, scoringPreview.loser.points - scoringPreview.loserPointsLost)} pt
+                    Nuovo tot: {isDraw ? ((p2?.points || 0) + 5) : Math.max(0, scoringPreview.loser.points - scoringPreview.loserPointsLost)} pt
                   </span>
                 </div>
               </div>
 
-              <p className="text-xs text-emerald-300/90 italic pt-1">
+              <p className={`text-xs italic pt-1 ${isDraw ? 'text-amber-300/90' : 'text-emerald-300/90'}`}>
                 ℹ️ {scoringPreview.ruleDescription}
               </p>
             </div>
