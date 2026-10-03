@@ -139,63 +139,63 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Mobile Sub-Navigation */}
-        <div className="flex md:hidden items-center justify-between py-2 border-t border-slate-200 overflow-x-auto gap-2">
+        <div className="flex md:hidden items-center py-2 border-t border-slate-200 gap-1 justify-around w-full">
           {isAdmin && (
             <button
               onClick={() => setActiveTab('manager')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black whitespace-nowrap ${
+              className={`flex-1 flex flex-col items-center gap-0.5 py-1 px-0.5 rounded-lg text-[10px] font-black transition-all ${
                 activeTab === 'manager'
-                  ? 'bg-orange-500 text-white shadow-sm'
+                  ? 'bg-orange-500/10 text-orange-600 border border-orange-200/40'
                   : 'text-orange-600 hover:bg-orange-50'
               }`}
             >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Gestione
+              <ShieldCheck className="w-4 h-4" />
+              <span className="truncate">Gestione</span>
             </button>
           )}
           <button
             onClick={() => setActiveTab('noticeboard')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`flex-1 flex flex-col items-center gap-0.5 py-1 px-0.5 rounded-lg text-[10px] font-semibold transition-all ${
               activeTab === 'noticeboard'
-                ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                ? 'bg-slate-100 text-slate-900 border border-slate-200/60 shadow-sm'
                 : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <Tv className="w-3.5 h-3.5 text-orange-500" />
-            Dashboard
+            <Tv className="w-4 h-4 text-orange-500" />
+            <span className="truncate">Bacheca</span>
           </button>
           <button
             onClick={() => setActiveTab('ladder')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`flex-1 flex flex-col items-center gap-0.5 py-1 px-0.5 rounded-lg text-[10px] font-semibold transition-all ${
               activeTab === 'ladder'
-                ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                ? 'bg-slate-100 text-slate-900 border border-slate-200/60 shadow-sm'
                 : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <Trophy className="w-3.5 h-3.5 text-amber-500" />
-            Classifiche
+            <Trophy className="w-4 h-4 text-amber-500" />
+            <span className="truncate">Classifiche</span>
           </button>
           <button
             onClick={() => setActiveTab('tournaments')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`flex-1 flex flex-col items-center gap-0.5 py-1 px-0.5 rounded-lg text-[10px] font-semibold transition-all ${
               activeTab === 'tournaments'
-                ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                ? 'bg-slate-100 text-slate-900 border border-slate-200/60 shadow-sm'
                 : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <Swords className="w-3.5 h-3.5 text-orange-500" />
-            Tornei
+            <Swords className="w-4 h-4 text-orange-500" />
+            <span className="truncate">Tornei</span>
           </button>
           <button
             onClick={() => setActiveTab('player')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
+            className={`flex-1 flex flex-col items-center gap-0.5 py-1 px-0.5 rounded-lg text-[10px] font-semibold transition-all ${
               activeTab === 'player'
-                ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                ? 'bg-slate-100 text-slate-900 border border-slate-200/60 shadow-sm'
                 : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <UserCheck className="w-3.5 h-3.5 text-blue-500" />
-            Giocatori
+            <UserCheck className="w-4 h-4 text-blue-500" />
+            <span className="truncate">Profilo</span>
           </button>
         </div>
       </div>
