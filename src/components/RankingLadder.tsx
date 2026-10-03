@@ -702,12 +702,12 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                   <th scope="col" className="px-4 py-3.5">
                     {activeCategory === 'doppio' ? 'Coppia di Doppio' : 'Giocatore'}
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-center">Età / Sesso</th>
-                  <th scope="col" className="px-3 py-3.5 text-center">Class. FITP</th>
+                  <th scope="col" className="px-3 py-3.5 text-center hidden md:table-cell">Età / Sesso</th>
+                  <th scope="col" className="px-3 py-3.5 text-center hidden md:table-cell">Class. FITP</th>
                   <th scope="col" className="px-4 py-3.5 text-right font-black text-orange-600">Punti</th>
                   <th scope="col" className="px-3 py-3.5 text-center hidden md:table-cell">Partite</th>
                   <th scope="col" className="px-3 py-3.5 text-center hidden md:table-cell">V - P</th>
-                  <th scope="col" className="px-3 py-3.5 text-center hidden sm:table-cell">Win %</th>
+                  <th scope="col" className="px-3 py-3.5 text-center hidden md:table-cell">Win %</th>
                   <th scope="col" className="px-3 py-3.5 text-center hidden lg:table-cell">Striscia</th>
                   <th scope="col" className="px-4 py-3.5 text-right">Dettagli</th>
                 </tr>
@@ -794,7 +794,7 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                         </td>
 
                         {/* Età / Sesso */}
-                        <td className="px-3 py-3.5 text-center">
+                        <td className="px-3 py-3.5 text-center hidden md:table-cell">
                           <div className="flex flex-col items-center justify-center gap-0.5">
                             <div className="flex items-center gap-1.5">
                               <span className={`px-1.5 py-0.2 rounded font-black text-[10px] ${
@@ -829,7 +829,7 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                         </td>
 
                         {/* Classifica FITP */}
-                        <td className="px-3 py-3.5 text-center">
+                        <td className="px-3 py-3.5 text-center hidden md:table-cell">
                           <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/80">
                             {player.fitRating || 'NC'}
                           </span>
@@ -853,7 +853,7 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                         </td>
 
                         {/* Win % */}
-                        <td className="px-3 py-3.5 text-center hidden sm:table-cell">
+                        <td className="px-3 py-3.5 text-center hidden md:table-cell">
                           <div className="flex items-center justify-center gap-1.5">
                             <div className="w-12 bg-slate-100 rounded-full h-1.5 overflow-hidden hidden lg:block">
                               <div 
