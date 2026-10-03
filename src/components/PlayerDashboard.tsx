@@ -179,12 +179,14 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
     const matchesBetween = filteredHistory.filter(m => m.opponentId === opponent.id);
     const wins = matchesBetween.filter(m => m.isWinner).length;
-    const losses = matchesBetween.length - wins;
+    const draws = matchesBetween.filter(m => (m as any).isDraw).length;
+    const losses = matchesBetween.length - wins - draws;
 
     return {
       opponent,
       total: matchesBetween.length,
       wins,
+      draws,
       losses,
       matches: matchesBetween
     };
@@ -851,6 +853,11 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                   <span className="text-xs text-slate-500 font-medium">
                     {headToHead.total} {headToHead.total === 1 ? 'incontro' : 'incontri'} disputati
                   </span>
+                  {headToHead.draws > 0 && (
+                    <span className="text-xs font-bold text-amber-600 block mt-0.5">
+                      {headToHead.draws} {headToHead.draws === 1 ? 'pareggio' : 'pareggi'}
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -869,11 +876,13 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                       <span className="text-slate-700 font-medium">{m.title}</span>
                       <span className="font-bold text-slate-900">{m.score}</span>
                       <span className={`font-bold px-2 py-0.5 rounded text-[11px] ${
-                        m.isWinner 
-                          ? 'bg-emerald-550/20 text-emerald-600 border border-emerald-200' 
-                          : 'bg-rose-50 text-rose-600 border border-rose-200'
+                        m.isDraw 
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : m.isWinner 
+                            ? 'bg-blue-50 text-blue-600 border border-blue-200' 
+                            : 'bg-rose-50 text-rose-600 border border-rose-200'
                       }`}>
-                        {m.isWinner ? 'Vittoria' : 'Sconfitta'}
+                        {m.isDraw ? 'Pareggio' : m.isWinner ? 'Vittoria' : 'Sconfitta'}
                       </span>
                     </div>
                   ))}
