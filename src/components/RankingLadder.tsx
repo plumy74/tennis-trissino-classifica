@@ -311,7 +311,9 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
               </div>
             ) : (
               filteredHistoryMatches.map(m => {
-                const isP1Winner = m.winnerId === m.player1Id;
+                const isDraw = m.winnerId === 'draw';
+                const isP1Winner = !isDraw && m.winnerId === m.player1Id;
+                const isP2Winner = !isDraw && m.winnerId === m.player2Id;
                 const dateFormatted = new Date(m.date).toLocaleDateString('it-IT', {
                   day: '2-digit',
                   month: '2-digit',
@@ -332,7 +334,7 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                     </div>
 
                     <div className="flex items-center justify-between gap-3">
-                      <div className={`flex-1 text-left ${isP1Winner ? 'font-black text-slate-900' : 'text-slate-600'}`}>
+                      <div className={`flex-1 text-left ${isDraw ? 'font-bold text-slate-700' : isP1Winner ? 'font-black text-slate-900' : 'text-slate-600'}`}>
                         <div className="flex items-center gap-1.5">
                           {isP1Winner && <span className="text-amber-500">🏆</span>}
                           <span className="text-sm">{m.player1Name}</span>
@@ -344,18 +346,20 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                         {m.score}
                       </div>
 
-                      <div className={`flex-1 text-right ${!isP1Winner ? 'font-black text-slate-900' : 'text-slate-600'}`}>
+                      <div className={`flex-1 text-right ${isDraw ? 'font-bold text-slate-700' : isP2Winner ? 'font-black text-slate-900' : 'text-slate-600'}`}>
                         <div className="flex items-center justify-end gap-1.5">
                           <span className="text-[11px] text-slate-400 font-normal">(#{m.player2RankAtMatch})</span>
                           <span className="text-sm">{m.player2Name}</span>
-                          {!isP1Winner && <span className="text-amber-500">🏆</span>}
+                          {isP2Winner && <span className="text-amber-500">🏆</span>}
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between text-[11px] text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                       <span>🎯 Regola: <strong>{m.ruleApplied}</strong></span>
-                      <span className="text-emerald-600 font-bold">+{m.pointsAwardedWinner} pt vincitore</span>
+                      <span className="text-emerald-600 font-bold">
+                        {isDraw ? `+${m.pointsAwardedWinner || 5} pt a testa` : `+${m.pointsAwardedWinner} pt vincitore`}
+                      </span>
                     </div>
                   </div>
                 );
