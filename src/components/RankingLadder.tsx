@@ -709,7 +709,7 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                   <th scope="col" className="px-3 py-3.5 text-center hidden md:table-cell">V - P</th>
                   <th scope="col" className="px-3 py-3.5 text-center hidden md:table-cell">Win %</th>
                   <th scope="col" className="px-3 py-3.5 text-center hidden lg:table-cell">Striscia</th>
-                  <th scope="col" className="px-4 py-3.5 text-right">Dettagli</th>
+                  <th scope="col" className="px-4 py-3.5 text-right hidden md:table-cell">Dettagli</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -884,7 +884,7 @@ export const RankingLadder: React.FC<RankingLadderProps> = ({
                         </td>
 
                         {/* Dettagli */}
-                        <td className="px-4 py-3.5 text-right">
+                        <td className="px-4 py-3.5 text-right hidden md:table-cell">
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
