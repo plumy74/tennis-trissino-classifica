@@ -23,7 +23,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { Player, PlayerCategory, Gender, RankingMatch, Tournament, TournamentMatch, ClubSettings, SetScore } from '../types/tennis';
-import { calculateRankingPoints, calculateAge, formatBirthDate } from '../utils/scoring';
+import { calculateRankingPoints, calculateAge, formatBirthDate, computePlayersStatsFromMatches } from '../utils/scoring';
 import confetti from 'canvas-confetti';
 import { ClubLogo } from './ClubLogo';
 import { SearchableSelect } from './SearchableSelect';
@@ -86,10 +86,18 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
 }) => {
   const [activeSection, setActiveSection] = useState<'players' | 'matches' | 'tournaments' | 'settings'>('players');
 
+  const activeSeasonMatches = useMemo(() => {
+    return rankingMatches.filter(m => m.date && m.date.startsWith('2026'));
+  }, [rankingMatches]);
+
+  const computedPlayers = useMemo(() => {
+    return computePlayersStatsFromMatches(players, activeSeasonMatches);
+  }, [players, activeSeasonMatches]);
+
   // Counts per category
-  const maschileCount = players.filter(p => (p.category || 'maschile') === 'maschile').length;
-  const femminileCount = players.filter(p => p.category === 'femminile').length;
-  const doppioCount = players.filter(p => p.category === 'doppio').length;
+  const maschileCount = computedPlayers.filter(p => (p.category || 'maschile') === 'maschile').length;
+  const femminileCount = computedPlayers.filter(p => p.category === 'femminile').length;
+  const doppioCount = computedPlayers.filter(p => p.category === 'doppio').length;
 
   // ==========================================
   // SECTION 1: PLAYER MANAGEMENT STATE
@@ -880,7 +888,7 @@ export const AdminManagerView: React.FC<AdminManagerViewProps> = ({
     }
   };
 
-  const filteredPlayersList = players.filter(p => {
+  const filteredPlayersList = computedPlayers.filter(p => {
     if (playerCategoryFilter === 'all') return true;
     return (p.category || 'maschile') === playerCategoryFilter;
   });
