@@ -349,6 +349,21 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
     return data;
   }, [currentPlayer, rankingMatches]);
 
+  const rankingHistoryStats = useMemo(() => {
+    if (!currentPlayer) return { startRank: 1, bestRank: 1, progress: 0 };
+    const currentRank = currentPlayer.rank || 1;
+    const prevRank = currentPlayer.previousRank || currentRank;
+    const diff = prevRank - currentRank;
+    const bestRank = Math.min(currentRank, prevRank);
+    const startRank = prevRank;
+    return {
+      startRank,
+      currentRank,
+      bestRank,
+      progress: diff
+    };
+  }, [currentPlayer]);
+
   if (!currentPlayer || players.length === 0) {
     return (
       <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 text-center space-y-4 shadow-sm shadow-slate-100">
@@ -591,6 +606,66 @@ export const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
               />
             </AreaChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Storico & Progresso in Classifica */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm shadow-slate-100 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="font-display font-black text-base text-slate-900 flex items-center gap-2">
+              <Award className="w-5 h-5 text-amber-500" />
+              Storico & Progresso in Classifica
+            </h3>
+            <p className="text-xs text-slate-500">
+              Confronto tra la posizione iniziale di inizio anno e la classifica attuale
+            </p>
+          </div>
+          <span className={`px-3 py-1 rounded-xl text-xs font-black border ${
+            rankingHistoryStats.progress > 0 
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+              : rankingHistoryStats.progress < 0 
+              ? 'bg-rose-50 text-rose-700 border-rose-200' 
+              : 'bg-slate-100 text-slate-700 border-slate-200'
+          }`}>
+            {rankingHistoryStats.progress > 0 
+              ? `🚀 +${rankingHistoryStats.progress} posizioni scalate` 
+              : rankingHistoryStats.progress < 0 
+              ? `📉 ${rankingHistoryStats.progress} posizioni` 
+              : '✨ Posizione stabile'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+              Posizione Iniziale (Inizio Anno)
+            </span>
+            <div className="font-display font-black text-2xl text-slate-700">
+              #{rankingHistoryStats.startRank}°
+            </div>
+            <span className="text-[11px] text-slate-400 block">Stagione 2026</span>
+          </div>
+
+          <div className="bg-amber-50/60 border border-amber-200/80 rounded-xl p-4 text-center space-y-1">
+            <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider block">
+              Miglior Posizione Raggiunta
+            </span>
+            <div className="font-display font-black text-2xl text-amber-600">
+              #{rankingHistoryStats.bestRank}° 🏆
+            </div>
+            <span className="text-[11px] text-amber-600/80 block">Picco massimo</span>
+          </div>
+
+          <div className="bg-blue-50/60 border border-blue-200/80 rounded-xl p-4 text-center space-y-1">
+            <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider block">
+              Posizione Attuale
+            </span>
+            <div className="font-display font-black text-2xl text-blue-600">
+              #{rankingHistoryStats.currentRank}°
+            </div>
+            <span className="text-[11px] text-blue-600/80 block">Aggiornato in tempo reale</span>
+          </div>
         </div>
       </div>
 
