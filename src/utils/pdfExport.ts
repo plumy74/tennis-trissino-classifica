@@ -648,19 +648,20 @@ export function exportMatchHistoryToPDF(
 
     applyAutoTable(doc, {
       startY: 26,
+      margin: { left: 14, right: 14 },
       head: [['#', 'Data', 'Cat.', 'Giocatore 1', 'Giocatore 2', 'Punteggio', 'Formato', 'Punti']],
       body: tableData,
       headStyles: { fillColor: [249, 115, 22] }, // orange-500
       styles: { fontSize: 8, cellPadding: 2.5 },
       columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: 22 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 42 },
-        4: { cellWidth: 42 },
-        5: { cellWidth: 24 },
-        6: { cellWidth: 22 },
-        7: { cellWidth: 16 }
+        0: { cellWidth: 8 },
+        1: { cellWidth: 20 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 38 },
+        4: { cellWidth: 38 },
+        5: { cellWidth: 22 },
+        6: { cellWidth: 24 },
+        7: { cellWidth: 14 }
       }
     });
 
