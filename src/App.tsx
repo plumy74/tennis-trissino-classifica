@@ -47,6 +47,7 @@ import { ClubLogo } from './components/ClubLogo';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('noticeboard');
+  const [ladderTab, setLadderTab] = useState<'ladder' | 'history'>('ladder');
   
   // Data States from Firestore
   const [clubSettings, setClubSettings] = useState<ClubSettings>(INITIAL_CLUB_SETTINGS);
@@ -855,13 +856,20 @@ export default function App() {
     setActiveTab('tournaments');
   };
 
+  const handleTabChange = (tab: AppTab) => {
+    if (tab === 'ladder') {
+      setLadderTab('ladder');
+    }
+    setActiveTab(tab);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
       
       {/* Navbar */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         isAdmin={isAdmin}
         onToggleAdmin={() => {
           if (isAdmin) {
@@ -963,6 +971,7 @@ export default function App() {
             players={players}
             rankingMatches={rankingMatches}
             isAdmin={isAdmin}
+            initialTab={ladderTab}
             onOpenMatchModal={() => setIsMatchModalOpen(true)}
             onSelectPlayer={handleSelectPlayerFromAnywhere}
             onAddPlayer={() => setIsSettingsModalOpen(true)}
@@ -1012,7 +1021,10 @@ export default function App() {
             tournaments={tournaments}
             onSelectPlayer={handleSelectPlayerFromAnywhere}
             onSelectTournament={handleSelectTournamentFromAnywhere}
-            onViewHistory={() => setActiveTab('ladder')}
+            onViewHistory={() => {
+              setLadderTab('history');
+              setActiveTab('ladder');
+            }}
           />
         )}
 
